@@ -1,0 +1,7 @@
+[package]
+name = "sine_wave"
+version = "0.1.0"
+authors = ["recombinant <gituser@recombinant.me.uk>"]
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "*", features = ["winuser"] }

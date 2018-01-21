@@ -1,0 +1,8 @@
+[package]
+name = "sys_mets2"
+version = "0.1.0"
+authors = ["recombinant <gituser@recombinant.me.uk>"]
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "*", features = ["winuser","winbase"] }
+sys_mets = { path = "../sys_mets" }
