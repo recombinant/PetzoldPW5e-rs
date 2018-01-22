@@ -5,3 +5,4 @@ authors = ["recombinant <gituser@recombinant.me.uk>"]
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "*", features = ["winuser", "windowsx"] }
+extras = { path = "../../extras" }

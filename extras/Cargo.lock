@@ -6,22 +6,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sys_mets4"
-version = "0.1.0"
-dependencies = [
- "extras 0.1.0",
- "sys_mets_data 0.1.0",
- "winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sys_mets_data"
-version = "0.1.0"
-dependencies = [
- "winapi 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "winapi"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

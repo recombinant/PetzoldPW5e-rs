@@ -11,12 +11,10 @@
 #![windows_subsystem = "windows"]
 
 #![cfg(windows)] extern crate winapi;
+extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::{c_int};
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -27,21 +25,15 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WM_MOUSEMOVE, MK_RBUTTON, MK_LBUTTON,
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetStockObject, SelectObject, MoveToEx, LineTo, PolyBezier};
+use winapi::um::wingdi::{MoveToEx, LineTo, PolyBezier, };
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
-use winapi::shared::windef::{HWND, HBRUSH, POINT, HDC};
+use winapi::shared::windef::{HWND, POINT, HDC};
 use winapi::shared::ntdef::{LPCWSTR, };
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-const WHITE_PEN: c_int = winapi::um::wingdi::WHITE_PEN as c_int;
-const BLACK_PEN: c_int = winapi::um::wingdi::BLACK_PEN as c_int;
-
-
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+// There are some things missing from winapi,
+// and some that have been given an interesting interpretation
+use extras::{WHITE_BRUSH, WHITE_PEN, BLACK_PEN, to_wstring, SelectPen, GetStockPen, GetStockBrush, };
 
 
 fn main() {
@@ -58,7 +50,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),
@@ -157,7 +149,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             if (wparam & MK_LBUTTON) != 0 || (wparam & MK_RBUTTON) != 0 {
                 let hdc = GetDC(hwnd);
 
-                SelectObject(hdc, GetStockObject(WHITE_PEN));
+                SelectPen(hdc, GetStockPen(WHITE_PEN));
                 draw_bezier(hdc, &BEZIER_POINTS);
 
                 if (wparam & MK_LBUTTON) != 0 {
@@ -169,7 +161,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                     BEZIER_POINTS[2].y = GET_Y_LPARAM(lparam);
                 }
 
-                SelectObject(hdc, GetStockObject(BLACK_PEN));
+                SelectPen(hdc, GetStockPen(BLACK_PEN));
                 draw_bezier(hdc, &BEZIER_POINTS);
                 ReleaseDC(hwnd, hdc);
             }

@@ -11,12 +11,10 @@
 #![windows_subsystem = "windows"]
 
 #![cfg(windows)] extern crate winapi;
+extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -27,22 +25,16 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
                           IDC_WAIT, };
-use winapi::um::wingdi::{GetStockObject, DeleteObject, MoveToEx, LineTo, CreateEllipticRgn,
-                         CreateRectRgn, CombineRgn, SelectClipRgn, SetViewportOrgEx,
-                         RGN_OR, RGN_XOR, };
+use winapi::um::wingdi::{MoveToEx, LineTo, CreateEllipticRgn,
+                         CreateRectRgn, SelectClipRgn, SetViewportOrgEx, };
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, HRGN, FALSE, TRUE, };
-use winapi::shared::windef::{HWND, HBRUSH, HGDIOBJ};
+use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-
-
-//
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+// There are some things missing from winapi,
+// and some that have been given an interesting interpretation
+use extras::{WHITE_BRUSH, to_wstring, GetStockBrush, UnionRgn, XorRgn, DeleteRgn, };
 
 
 fn main() {
@@ -59,7 +51,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),
@@ -138,7 +130,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             ShowCursor(TRUE);
 
             if !HRGN_CLIP.is_null() {
-                DeleteObject(HRGN_CLIP as HGDIOBJ);
+                DeleteRgn(HRGN_CLIP);
             }
 
             let mut hrgn_tmp: [HRGN; 6] = [
@@ -151,12 +143,19 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             ];
             HRGN_CLIP = CreateRectRgn(0, 0, 1, 1);
 
-            CombineRgn(hrgn_tmp[4], hrgn_tmp[0], hrgn_tmp[1], RGN_OR);
-            CombineRgn(hrgn_tmp[5], hrgn_tmp[2], hrgn_tmp[3], RGN_OR);
-            CombineRgn(HRGN_CLIP, hrgn_tmp[4], hrgn_tmp[5], RGN_XOR);
+            UnionRgn(hrgn_tmp[4], hrgn_tmp[0], hrgn_tmp[1]);
+            UnionRgn(hrgn_tmp[5], hrgn_tmp[2], hrgn_tmp[3]);
+            XorRgn(HRGN_CLIP, hrgn_tmp[4], hrgn_tmp[5]);
 
-            for hrgn in hrgn_tmp.iter_mut() {
-                DeleteObject(hrgn as *mut HRGN as HGDIOBJ);
+            //  // rustc 1.23.0 requires some ugly casting here...
+            //
+            //  for hrgn in hrgn_tmp.iter_mut() {
+            //      DeleteRgn(hrgn as *mut HRGN as HRGN);
+            //  }
+
+            // Iterate over indices, saves unnecessary casting
+            for i in 0..hrgn_tmp.len() {
+                DeleteRgn(hrgn_tmp[i]);
             }
 
             SetCursor(hcursor);

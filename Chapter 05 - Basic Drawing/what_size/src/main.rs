@@ -11,12 +11,10 @@
 #![windows_subsystem = "windows"]
 
 #![cfg(windows)] extern crate winapi;
+extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::{c_int};
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -26,30 +24,20 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WM_DESTROY, WM_PAINT, WM_SIZE,
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetStockObject, SelectObject, GetTextMetricsW, TextOutW, SetMapMode,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetMapMode,
                          SetWindowExtEx, SetViewportExtEx, SaveDC, RestoreDC, DPtoLP,
                          TEXTMETRICW,
 };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
-use winapi::shared::windef::{HWND, HBRUSH, RECT, POINT, HDC};
+use winapi::shared::windef::{HWND, RECT, POINT, HDC};
 use winapi::shared::ntdef::LPCWSTR;
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-const SYSTEM_FIXED_FONT: c_int = winapi::um::wingdi::SYSTEM_FIXED_FONT as c_int;
-const MM_ANISOTROPIC: c_int = winapi::um::wingdi::MM_ANISOTROPIC as c_int;
-const MM_TEXT: c_int = winapi::um::wingdi::MM_TEXT as c_int;
-const MM_LOMETRIC: c_int = winapi::um::wingdi::MM_LOMETRIC as c_int;
-const MM_HIMETRIC: c_int = winapi::um::wingdi::MM_HIMETRIC as c_int;
-const MM_LOENGLISH: c_int = winapi::um::wingdi::MM_LOENGLISH as c_int;
-const MM_HIENGLISH: c_int = winapi::um::wingdi::MM_HIENGLISH as c_int;
-const MM_TWIPS: c_int = winapi::um::wingdi::MM_TWIPS as c_int;
-
-
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+// There are some things missing from winapi,
+// and some that have been given an interesting interpretation
+use extras::{WHITE_BRUSH, SYSTEM_FIXED_FONT, MM_ANISOTROPIC, MM_TEXT, MM_LOMETRIC, MM_HIMETRIC,
+             MM_LOENGLISH, MM_HIENGLISH, MM_TWIPS, to_wstring, GetStockBrush, SelectFont,
+             GetStockFont, };
 
 
 fn main() {
@@ -66,7 +54,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),
@@ -154,7 +142,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut ps: PAINTSTRUCT = mem::uninitialized();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
+            SelectFont(hdc, GetStockFont(SYSTEM_FIXED_FONT));
 
             SetMapMode(hdc, MM_ANISOTROPIC);
             SetWindowExtEx(hdc, 1, 1, null_mut());

@@ -12,13 +12,11 @@
 
 #![cfg(windows)] extern crate winapi;
 extern crate sys_mets_data;
+extern crate extras;
 
 use sys_mets_data::SYS_METRICS;
 use std::mem;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -35,13 +33,9 @@ use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
 use winapi::shared::windef::{HWND, HBRUSH};
 use winapi::shared::ntdef::LPCWSTR;
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-
-
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+// There are some things missing from winapi,
+// and some that have been given an interesting interpretation
+use extras::{WHITE_BRUSH, to_wstring, };
 
 
 fn main() {
@@ -58,7 +52,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),

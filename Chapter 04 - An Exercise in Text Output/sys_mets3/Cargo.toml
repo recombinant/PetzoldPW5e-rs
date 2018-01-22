@@ -6,3 +6,4 @@ authors = ["recombinant <gituser@recombinant.me.uk>"]
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "*", features = ["winuser", "winbase", "windowsx"] }
 sys_mets_data = { path = "../sys_mets_data" }
+extras = { path = "../../extras" }

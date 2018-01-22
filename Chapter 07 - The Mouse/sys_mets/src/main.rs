@@ -10,17 +10,14 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)]
-extern crate winapi;
+#![cfg(windows)] extern crate winapi;
 extern crate sys_mets_data;
+extern crate extras;
 
 use sys_mets_data::SYS_METRICS;
 use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::{c_int, c_short, c_void};
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -35,49 +32,18 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
                           SPI_GETWHEELSCROLLLINES, WHEEL_DELTA,
                           SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS, };
-use winapi::um::wingdi::{GetStockObject, GetTextMetricsW, TextOutW, SetTextAlign,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{LOWORD, DWORD,
-                                UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
-use winapi::shared::windef::{HWND, HBRUSH};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
+use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-const SB_VERT: c_int = winapi::um::winuser::SB_VERT as c_int;
-const SB_HORZ: c_int = winapi::um::winuser::SB_HORZ as c_int;
-const SB_TOP: c_int = winapi::um::winuser::SB_TOP as c_int;
-const SB_BOTTOM: c_int = winapi::um::winuser::SB_BOTTOM as c_int;
-const SB_LINEUP: c_int = winapi::um::winuser::SB_LINEUP as c_int;
-const SB_LINEDOWN: c_int = winapi::um::winuser::SB_LINEDOWN as c_int;
-const SB_PAGEUP: c_int = winapi::um::winuser::SB_PAGEUP as c_int;
-const SB_PAGEDOWN: c_int = winapi::um::winuser::SB_PAGEDOWN as c_int;
-const SB_THUMBPOSITION: c_int = winapi::um::winuser::SB_THUMBPOSITION as c_int;
-const SB_LINELEFT: c_int = winapi::um::winuser::SB_LINELEFT as c_int;
-const SB_LINERIGHT: c_int = winapi::um::winuser::SB_LINERIGHT as c_int;
-const SB_PAGELEFT: c_int = winapi::um::winuser::SB_PAGELEFT as c_int;
-const SB_PAGERIGHT: c_int = winapi::um::winuser::SB_PAGERIGHT as c_int;
-
-
-// TODO: move to winapi::shared::windowsx
-#[allow(non_snake_case)]
-#[inline]
-pub fn GET_WM_VSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
-    LOWORD(wp as DWORD) as c_int
-}
-#[allow(non_snake_case)]
-#[inline]
-pub fn GET_WM_HSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
-    LOWORD(wp as DWORD) as c_int
-}
-
-//
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_PAGEUP,
+             SB_PAGEDOWN, SB_THUMBPOSITION, SB_LINELEFT, SB_LINERIGHT, SB_PAGELEFT, SB_PAGERIGHT,
+             to_wstring, GET_WM_VSCROLL_CODE, GET_WM_HSCROLL_CODE, GetStockBrush};
 
 
 fn main() {
@@ -94,7 +60,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),

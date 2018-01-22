@@ -12,14 +12,12 @@
 
 #![cfg(windows)] extern crate winapi;
 extern crate sys_mets_data;
+extern crate extras;
 
 use sys_mets_data::SYS_METRICS;
 use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -32,24 +30,18 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_LINELEFT,
                           SB_LINERIGHT, SB_PAGEUP, SB_PAGEDOWN, SB_PAGELEFT, SB_PAGERIGHT,
                           SB_THUMBPOSITION, SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS, };
-use winapi::um::wingdi::{GetStockObject, GetTextMetricsW, TextOutW, SetTextAlign,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
 use winapi::shared::minwindef::{LOWORD, DWORD, UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
-use winapi::shared::windef::{HWND, HBRUSH};
+use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
-// There are some mismatches in winapi types between constants and their usage...
-const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-const SB_VERT: c_int = winapi::um::winuser::SB_VERT as c_int;
-const SB_HORZ: c_int = winapi::um::winuser::SB_HORZ as c_int;
-
-
-fn to_wstring(str: &str) -> Vec<u16> {
-    OsStr::new(str).encode_wide().chain(once(0)).collect()
-}
+// There are some things missing from winapi,
+// and some that have been given an interesting interpretation
+use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstring, GetStockBrush, };
 
 
 fn main() {
@@ -66,7 +58,7 @@ fn main() {
             hInstance: hinstance,
             hIcon: LoadIconW(null_mut(), IDI_APPLICATION),
             hCursor: LoadCursorW(null_mut(), IDC_ARROW),
-            hbrBackground: GetStockObject(WHITE_BRUSH) as HBRUSH,
+            hbrBackground: GetStockBrush(WHITE_BRUSH),
             lpszClassName: app_name.as_ptr(),
             hIconSm: null_mut(),
             lpszMenuName: null(),

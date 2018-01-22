@@ -40,7 +40,10 @@ use winapi::shared::ntdef::LPCWSTR;
 const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
 
 
-fn to_wstring(str: &str) -> Vec<u16> {
+// This performs the conversion from Rust str to Windows WSTR
+// Use this function to convert and then use its returned value's .as_ptr()
+// method to get the LPWSTR.
+pub fn to_wstring(str: &str) -> Vec<u16> {
     OsStr::new(str).encode_wide().chain(once(0)).collect()
 }
 
