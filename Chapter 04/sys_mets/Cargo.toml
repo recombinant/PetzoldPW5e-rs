@@ -1,7 +1,0 @@
-[package]
-name = "sys_mets"
-version = "0.1.0"
-authors = ["recombinant <gituser@recombinant.me.uk>"]
-
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "*", features = ["winuser"] }
