@@ -10,15 +10,16 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 extern crate rand;
 extern crate extras;
 
 use rand::distributions::{IndependentSample, Range};
-use rand::{thread_rng};
+use rand::thread_rng;
 use std::mem;
 use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int};
+use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, TranslateMessage, DispatchMessageW,
                           MessageBoxW, LoadIconW, LoadCursorW, PeekMessageW,
@@ -28,18 +29,18 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{CreateSolidBrush, RGB, DeleteObject};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
 use winapi::shared::windef::{HWND, RECT, HBRUSH, HGDIOBJ};
 use winapi::shared::ntdef::LPCWSTR;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, GetStockBrush, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("line_demo");
+    let app_name = to_wstr("line_demo");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -61,13 +62,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Line Demonstration");
+        let caption = to_wstr("Line Demonstration");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -116,8 +117,8 @@ fn main() {
 }
 
 
-static mut CX_CLIENT: c_int = 0;
-static mut CY_CLIENT: c_int = 0;
+static mut CLIENT_WIDTH: c_int = 0;
+static mut CLIENT_HEIGHT: c_int = 0;
 
 
 unsafe extern "system" fn wnd_proc(hwnd: HWND,
@@ -127,8 +128,8 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    -> LRESULT {
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             0 as LRESULT  // message processed
         }
@@ -145,15 +146,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
 unsafe fn draw_rectangle(hwnd: HWND)
 {
-    if CX_CLIENT == 0 || CY_CLIENT == 0 {
+    if CLIENT_WIDTH == 0 || CLIENT_HEIGHT == 0 {
         return;
     }
 
     let mut rect: RECT = mem::uninitialized();
     let mut rng = thread_rng();
 
-    let range_x = Range::new(0, CX_CLIENT);
-    let range_y = Range::new(0, CY_CLIENT);
+    let range_x = Range::new(0, CLIENT_WIDTH);
+    let range_y = Range::new(0, CLIENT_HEIGHT);
 
     SetRect(&mut rect,
             range_x.ind_sample(&mut rng),

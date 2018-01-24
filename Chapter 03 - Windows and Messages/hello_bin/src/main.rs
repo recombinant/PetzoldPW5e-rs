@@ -10,7 +10,8 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 
 use std::env;
 use std::mem;
@@ -43,13 +44,13 @@ const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
 // This performs the conversion from Rust str to Windows WSTR
 // Use this function to convert and then use its returned value's .as_ptr()
 // method to get the LPWSTR.
-pub fn to_wstring(str: &str) -> Vec<u16> {
+pub fn to_wstr(str: &str) -> Vec<u16> {
     OsStr::new(str).encode_wide().chain(once(0)).collect()
 }
 
 
 fn main() {
-    let app_name = to_wstring("hello_win");
+    let app_name = to_wstr("hello_win");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -79,7 +80,7 @@ fn main() {
             return; //   premature exit
         }
 
-        let caption = to_wstring("The Hello Program");
+        let caption = to_wstr("The Hello Program");
         let hwnd = CreateWindowExW(
             0,                    // dwExStyle:
             atom as LPCWSTR,      // lpClassName: class name or atom
@@ -147,7 +148,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut rect: RECT = mem::uninitialized();
             GetClientRect(hwnd, &mut rect);
 
-            DrawTextW(hdc, to_wstring("Hello, Windows 98!").as_ptr(), -1, &mut rect,
+            DrawTextW(hdc, to_wstr("Hello, Windows 98!").as_ptr(), -1, &mut rect,
                       DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 
             EndPaint(hwnd, &mut ps);

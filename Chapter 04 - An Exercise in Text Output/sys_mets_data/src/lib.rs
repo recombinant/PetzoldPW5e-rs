@@ -3,7 +3,8 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{SM_CXSCREEN, SM_CYSCREEN, SM_CXVSCROLL, SM_CYHSCROLL, SM_CYCAPTION,

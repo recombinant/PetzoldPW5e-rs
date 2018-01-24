@@ -34,11 +34,11 @@ use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, GetStockBrush, UnionRgn, XorRgn, DeleteRgn, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, UnionRgn, XorRgn, DeleteRgn, };
 
 
 fn main() {
-    let app_name = to_wstring("clover");
+    let app_name = to_wstr("clover");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -60,13 +60,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Draw a Clover");
+        let caption = to_wstr("Draw a Clover");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -117,14 +117,14 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
     static mut HRGN_CLIP: HRGN = 0 as HRGN;
 
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             let hcursor = SetCursor(LoadCursorW(null_mut(), IDC_WAIT));
             ShowCursor(TRUE);
@@ -134,10 +134,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             }
 
             let mut hrgn_tmp: [HRGN; 6] = [
-                CreateEllipticRgn(0, CY_CLIENT / 3, CX_CLIENT / 2, 2 * CY_CLIENT / 3),
-                CreateEllipticRgn(CX_CLIENT / 2, CY_CLIENT / 3, CX_CLIENT, 2 * CY_CLIENT / 3),
-                CreateEllipticRgn(CX_CLIENT / 3, 0, 2 * CX_CLIENT / 3, CY_CLIENT / 2),
-                CreateEllipticRgn(CX_CLIENT / 3, CY_CLIENT / 2, 2 * CX_CLIENT / 3, CY_CLIENT),
+                CreateEllipticRgn(0, CLIENT_HEIGHT / 3, CLIENT_WIDTH / 2, 2 * CLIENT_HEIGHT / 3),
+                CreateEllipticRgn(CLIENT_WIDTH / 2, CLIENT_HEIGHT / 3, CLIENT_WIDTH, 2 * CLIENT_HEIGHT / 3),
+                CreateEllipticRgn(CLIENT_WIDTH / 3, 0, 2 * CLIENT_WIDTH / 3, CLIENT_HEIGHT / 2),
+                CreateEllipticRgn(CLIENT_WIDTH / 3, CLIENT_HEIGHT / 2, 2 * CLIENT_WIDTH / 3, CLIENT_HEIGHT),
                 CreateRectRgn(0, 0, 1, 1),
                 CreateRectRgn(0, 0, 1, 1),
             ];
@@ -167,10 +167,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut ps: PAINTSTRUCT = mem::uninitialized();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            SetViewportOrgEx(hdc, CX_CLIENT / 2, CY_CLIENT / 2, null_mut());
+            SetViewportOrgEx(hdc, CLIENT_WIDTH / 2, CLIENT_HEIGHT / 2, null_mut());
             SelectClipRgn(hdc, HRGN_CLIP);
 
-            let radius = (CX_CLIENT as f64 / 2.0).hypot(CY_CLIENT as f64 / 2.0);
+            let radius = (CLIENT_WIDTH as f64 / 2.0).hypot(CLIENT_HEIGHT as f64 / 2.0);
 
             for degree in 0..360 {
                 let angle = (degree as f64).to_radians();

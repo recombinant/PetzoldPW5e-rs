@@ -26,18 +26,18 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{GetStockObject, SelectObject, Polygon, SetPolyFillMode,
                          ALTERNATE, WINDING, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, };
-use winapi::shared::windef::{HWND, HBRUSH, POINT};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
+use winapi::shared::windef::{HWND, POINT};
 use winapi::shared::ntdef::LPCWSTR;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, GRAY_BRUSH, to_wstring};
+use extras::{WHITE_BRUSH, GRAY_BRUSH, to_wstr, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("alt_wind");
+    let app_name = to_wstr("alt_wind");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -59,13 +59,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Alternate and Winding Fill Modes");
+        let caption = to_wstr("Alternate and Winding Fill Modes");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -122,13 +122,13 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         POINT { x: 30, y: 90 }, POINT { x: 70, y: 90 }, POINT { x: 70, y: 30 },
         POINT { x: 10, y: 30 }
     ];
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
 
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             0 as LRESULT  // message processed
         }
@@ -142,15 +142,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut poly_points: [POINT; 10] = mem::uninitialized();
 
             for (figure_point, poly_point) in FIGURE_POINTS.iter().zip(poly_points.iter_mut()) {
-                poly_point.x = CX_CLIENT * figure_point.x / 200;
-                poly_point.y = CY_CLIENT * figure_point.y / 100;
+                poly_point.x = CLIENT_WIDTH * figure_point.x / 200;
+                poly_point.y = CLIENT_HEIGHT * figure_point.y / 100;
             }
 
             SetPolyFillMode(hdc, ALTERNATE);
             Polygon(hdc, &poly_points[0], poly_points.len() as c_int);
 
             for poly_point in poly_points.iter_mut() {
-                poly_point.x += CX_CLIENT / 2;
+                poly_point.x += CLIENT_WIDTH / 2;
             }
 
             SetPolyFillMode(hdc, WINDING);

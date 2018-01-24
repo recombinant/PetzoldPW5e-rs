@@ -10,7 +10,8 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 extern crate sys_mets_data;
 extern crate extras;
 
@@ -25,21 +26,21 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           MSG, PAINTSTRUCT, WNDCLASSEXW,
                           WM_CREATE, WM_DESTROY, WS_OVERLAPPEDWINDOW, WM_PAINT, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetStockObject, GetTextMetricsW, TextOutW, SetTextAlign,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
-use winapi::shared::windef::{HWND, HBRUSH};
+use winapi::shared::windef::HWND;
 use winapi::shared::ntdef::LPCWSTR;
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("sys_mets1");
+    let app_name = to_wstr("sys_mets1");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -61,13 +62,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Get System Metrics No. 1");
+        let caption = to_wstr("Get System Metrics No. 1");
         let hwnd = CreateWindowExW(
             0,                    // dwExStyle:
             atom as LPCWSTR,      // lpClassName: class name or atom
@@ -118,9 +119,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CAPS: c_int = 0;
-    static mut CX_CHAR: c_int = 0;
-    static mut CY_CHAR: c_int = 0;
+    static mut CAPS_WIDTH: c_int = 0;
+    static mut CHAR_WIDTH: c_int = 0;
+    static mut CHAR_HEIGHT: c_int = 0;
 
     match message {
         WM_CREATE => {
@@ -128,9 +129,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut tm: TEXTMETRICW = mem::uninitialized();
 
             GetTextMetricsW(hdc, &mut tm);
-            CX_CHAR = tm.tmAveCharWidth;
-            CX_CAPS = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CX_CHAR / 2;
-            CY_CHAR = tm.tmHeight + tm.tmExternalLeading;
+            CHAR_WIDTH = tm.tmAveCharWidth;
+            CAPS_WIDTH = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CHAR_WIDTH / 2;
+            CHAR_HEIGHT = tm.tmHeight + tm.tmExternalLeading;
 
             ReleaseDC(hwnd, hdc);
 
@@ -145,26 +146,26 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 SetTextAlign(hdc, TA_LEFT | TA_TOP);
 
-                let label = to_wstring(sys_metric.label);
+                let label = to_wstr(sys_metric.label);
                 TextOutW(hdc,
                          0,
-                         CY_CHAR * i,
+                         CHAR_HEIGHT * i,
                          label.as_ptr(),
                          lstrlenW(label.as_ptr()));
 
-                let desc = to_wstring(sys_metric.desc);
+                let desc = to_wstr(sys_metric.desc);
                 TextOutW(hdc,
-                         22 * CX_CAPS,
-                         CY_CHAR * i,
+                         22 * CAPS_WIDTH,
+                         CHAR_HEIGHT * i,
                          desc.as_ptr(),
                          lstrlenW(desc.as_ptr()));
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
-                let metric = to_wstring(&format!("{:5}", GetSystemMetrics(sys_metric.index)));
+                let metric = to_wstr(&format!("{:5}", GetSystemMetrics(sys_metric.index)));
                 TextOutW(hdc,
-                         22 * CX_CAPS + 40 * CX_CHAR,
-                         CY_CHAR * i,
+                         22 * CAPS_WIDTH + 40 * CHAR_WIDTH,
+                         CHAR_HEIGHT * i,
                          metric.as_ptr(),
                          lstrlenW(metric.as_ptr()));
             }

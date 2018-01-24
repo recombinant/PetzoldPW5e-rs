@@ -16,7 +16,7 @@ extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int,};
+use winapi::ctypes::{c_int, };
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -25,18 +25,18 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{MoveToEx, LineTo, Rectangle, Ellipse, RoundRect};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
 use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, GetStockBrush, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("line_demo");
+    let app_name = to_wstr("line_demo");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -58,13 +58,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Line Demonstration");
+        let caption = to_wstr("Line Demonstration");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -111,17 +111,17 @@ fn main() {
 
 
 unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                       message: UINT,
-                                       wparam: WPARAM,
-                                       lparam: LPARAM)
-                                       -> LRESULT {
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
+                                   message: UINT,
+                                   wparam: WPARAM,
+                                   lparam: LPARAM)
+                                   -> LRESULT {
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
 
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             0 as LRESULT  // message processed
         }
@@ -130,23 +130,23 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let hdc = BeginPaint(hwnd, &mut ps);
 
             Rectangle(hdc,
-                      CX_CLIENT / 8, CY_CLIENT / 8,
-                      7 * CX_CLIENT / 8, 7 * CY_CLIENT / 8);
+                      CLIENT_WIDTH / 8, CLIENT_HEIGHT / 8,
+                      7 * CLIENT_WIDTH / 8, 7 * CLIENT_HEIGHT / 8);
 
             MoveToEx(hdc, 0, 0, null_mut());
-            LineTo(hdc, CX_CLIENT, CY_CLIENT);
+            LineTo(hdc, CLIENT_WIDTH, CLIENT_HEIGHT);
 
-            MoveToEx(hdc, 0, CY_CLIENT, null_mut());
-            LineTo(hdc, CX_CLIENT, 0);
+            MoveToEx(hdc, 0, CLIENT_HEIGHT, null_mut());
+            LineTo(hdc, CLIENT_WIDTH, 0);
 
             Ellipse(hdc,
-                    CX_CLIENT / 8, CY_CLIENT / 8,
-                    7 * CX_CLIENT / 8, 7 * CY_CLIENT / 8);
+                    CLIENT_WIDTH / 8, CLIENT_HEIGHT / 8,
+                    7 * CLIENT_WIDTH / 8, 7 * CLIENT_HEIGHT / 8);
 
             RoundRect(hdc,
-                      CX_CLIENT / 4, CY_CLIENT / 4,
-                      3 * CX_CLIENT / 4, 3 * CY_CLIENT / 4,
-                      CX_CLIENT / 4, CY_CLIENT / 4);
+                      CLIENT_WIDTH / 4, CLIENT_HEIGHT / 4,
+                      3 * CLIENT_WIDTH / 4, 3 * CLIENT_HEIGHT / 4,
+                      CLIENT_WIDTH / 4, CLIENT_HEIGHT / 4);
 
             EndPaint(hwnd, &mut ps);
 

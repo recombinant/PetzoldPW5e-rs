@@ -41,12 +41,12 @@ pub const MM_HIMETRIC: c_int = winapi::um::wingdi::MM_HIMETRIC as c_int;
 pub const MM_LOENGLISH: c_int = winapi::um::wingdi::MM_LOENGLISH as c_int;
 pub const MM_HIENGLISH: c_int = winapi::um::wingdi::MM_HIENGLISH as c_int;
 pub const MM_TWIPS: c_int = winapi::um::wingdi::MM_TWIPS as c_int;
-
+pub const TRANSPARENT: c_int = winapi::um::wingdi::TRANSPARENT as c_int;
 
 // This performs the conversion from Rust str to Windows WSTR
 // Use this function to convert and then use its returned value's .as_ptr()
 // method to get the LPWSTR.
-pub fn to_wstring(str: &str) -> Vec<u16> {
+pub fn to_wstr(str: &str) -> Vec<u16> {
     OsStr::new(str).encode_wide().chain(once(0)).collect()
 }
 

@@ -10,12 +10,13 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int};
+use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
@@ -36,12 +37,12 @@ use winapi::shared::ntdef::LPCWSTR;
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
 use extras::{WHITE_BRUSH, SYSTEM_FIXED_FONT, MM_ANISOTROPIC, MM_TEXT, MM_LOMETRIC, MM_HIMETRIC,
-             MM_LOENGLISH, MM_HIENGLISH, MM_TWIPS, to_wstring, GetStockBrush, SelectFont,
+             MM_LOENGLISH, MM_HIENGLISH, MM_TWIPS, to_wstr, GetStockBrush, SelectFont,
              GetStockFont, };
 
 
 fn main() {
-    let app_name = to_wstring("what_size");
+    let app_name = to_wstr("what_size");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -63,13 +64,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("What Size is the Window?");
+        let caption = to_wstr("What Size is the Window?");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -120,9 +121,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CHAR: c_int = 0;
-    static mut CX_CAPS: c_int = 0;
-    static mut CY_CHAR: c_int = 0;
+    static mut CHAR_WIDTH: c_int = 0;
+    static mut CAPS_WIDTH: c_int = 0;
+    static mut CHAR_HEIGHT: c_int = 0;
 
     match message {
         WM_SIZE => {
@@ -130,9 +131,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut tm: TEXTMETRICW = mem::uninitialized();
 
             GetTextMetricsW(hdc, &mut tm);
-            CX_CHAR = tm.tmAveCharWidth;
-            CX_CAPS = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CX_CHAR / 2;
-            CY_CHAR = tm.tmHeight + tm.tmExternalLeading;
+            CHAR_WIDTH = tm.tmAveCharWidth;
+            CAPS_WIDTH = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CHAR_WIDTH / 2;
+            CHAR_HEIGHT = tm.tmHeight + tm.tmExternalLeading;
 
             ReleaseDC(hwnd, hdc);
 
@@ -146,11 +147,11 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             SetMapMode(hdc, MM_ANISOTROPIC);
             SetWindowExtEx(hdc, 1, 1, null_mut());
-            SetViewportExtEx(hdc, CX_CHAR, CY_CHAR, null_mut());
+            SetViewportExtEx(hdc, CHAR_WIDTH, CHAR_HEIGHT, null_mut());
 
             // TODO: move to const when Rust evolves
-            let heading = to_wstring("Mapping Mode            Left   Right     Top  Bottom");
-            let underln = to_wstring("------------            ----   -----     ---  ------");
+            let heading = to_wstr("Mapping Mode            Left   Right     Top  Bottom");
+            let underln = to_wstr("------------            ----   -----     ---  ------");
 
             TextOutW(hdc, 1, 1, heading.as_ptr(), lstrlenW(heading.as_ptr()));
             TextOutW(hdc, 1, 2, underln.as_ptr(), lstrlenW(underln.as_ptr()));
@@ -191,10 +192,10 @@ unsafe fn show(hwnd: HWND,
 
     RestoreDC(hdc, -1);
 
-    let buffer = to_wstring(&format!("{:-20} {:7} {:7} {:7} {:7}",
-                                     map_mode_name,
-                                     rect.left, rect.right,
-                                     rect.top, rect.bottom));
+    let buffer = to_wstr(&format!("{:-20} {:7} {:7} {:7} {:7}",
+                                  map_mode_name,
+                                  rect.left, rect.right,
+                                  rect.top, rect.bottom));
 
     TextOutW(hdc, text_x, text_y, buffer.as_ptr(), lstrlenW(buffer.as_ptr()));
 }

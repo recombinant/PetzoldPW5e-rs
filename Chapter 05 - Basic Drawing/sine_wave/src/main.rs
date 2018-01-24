@@ -10,13 +10,14 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
 use std::f64::consts::PI;
-use winapi::ctypes::{c_int};
+use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -26,21 +27,21 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{MoveToEx, LineTo, Polyline};
 use winapi::um::winnt::LONG;
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
 use winapi::shared::windef::{HWND, POINT};
 use winapi::shared::ntdef::LPCWSTR;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, GetStockBrush, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
 
 //
 const NUM: usize = 1000;
 
 
 fn main() {
-    let app_name = to_wstring("sine_wave");
+    let app_name = to_wstr("sine_wave");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -62,13 +63,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Sine Wave using Polyline");
+        let caption = to_wstr("Sine Wave using Polyline");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -119,14 +120,14 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
     static mut SINE_POINTS: [POINT; NUM] = [POINT { x: 0, y: 0 }; NUM];
 
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             0 as LRESULT  // message processed
         }
@@ -134,14 +135,14 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut ps: PAINTSTRUCT = mem::uninitialized();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            MoveToEx(hdc, 0, CY_CLIENT / 2, null_mut());
-            LineTo(hdc, CX_CLIENT, CY_CLIENT / 2);
+            MoveToEx(hdc, 0, CLIENT_HEIGHT / 2, null_mut());
+            LineTo(hdc, CLIENT_WIDTH, CLIENT_HEIGHT / 2);
 
             for (u, point) in SINE_POINTS.iter_mut().enumerate() {
                 let d = u as f64;
 
-                point.x = (d * CX_CLIENT as f64 / NUM as f64) as LONG;
-                point.y = (CY_CLIENT as f64 / 2.0 * (1.0 - (PI * 2.0 * d / NUM as f64).sin())) as LONG;
+                point.x = (d * CLIENT_WIDTH as f64 / NUM as f64) as LONG;
+                point.y = (CLIENT_HEIGHT as f64 / 2.0 * (1.0 - (PI * 2.0 * d / NUM as f64).sin())) as LONG;
             }
 
             Polyline(hdc, &SINE_POINTS[0], SINE_POINTS.len() as c_int);

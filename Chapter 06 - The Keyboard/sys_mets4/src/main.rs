@@ -13,15 +13,12 @@
 #![cfg(windows)]
 extern crate winapi;
 extern crate sys_mets_data;
-extern crate extras
+extern crate extras;
 
 use sys_mets_data::SYS_METRICS;
 use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
-use std::ffi::OsStr;
-use std::iter::once;
-use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -37,23 +34,23 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_LINELEFT,
                           SB_LINERIGHT, SB_PAGEUP, SB_PAGEDOWN, SB_PAGELEFT, SB_PAGERIGHT,
                           SB_THUMBPOSITION, SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS, };
-use winapi::um::wingdi::{GetStockObject, GetTextMetricsW, TextOutW, SetTextAlign,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM,};
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 use winapi::shared::minwindef::{LOWORD, DWORD,
                                 UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
-use winapi::shared::windef::{HWND, HBRUSH};
+use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstring, GetStockBrush };
+use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstr, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("sys_mets4");
+    let app_name = to_wstr("sys_mets4");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -75,13 +72,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Get System Metrics No. 4");
+        let caption = to_wstr("Get System Metrics No. 4");
         let hwnd = CreateWindowExW(
             0,                 // dwExStyle:
             atom as LPCWSTR,   // lpClassName: class name or atom
@@ -131,12 +128,12 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CAPS: c_int = 0;
-    static mut CX_CHAR: c_int = 0;
-    static mut CY_CHAR: c_int = 0;
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
-    static mut MAX_WIDTH: c_int = 0;
+    static mut CAPS_WIDTH: c_int = 0;
+    static mut CHAR_WIDTH: c_int = 0;
+    static mut CHAR_HEIGHT: c_int = 0;
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
+    static mut MAX_COLUMN_WIDTH: c_int = 0;
 
     match message {
         WM_CREATE => {
@@ -144,22 +141,22 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut tm: TEXTMETRICW = mem::uninitialized();
 
             GetTextMetricsW(hdc, &mut tm);
-            CX_CHAR = tm.tmAveCharWidth;
-            CX_CAPS = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CX_CHAR / 2;
-            CY_CHAR = tm.tmHeight + tm.tmExternalLeading;
+            CHAR_WIDTH = tm.tmAveCharWidth;
+            CAPS_WIDTH = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CHAR_WIDTH / 2;
+            CHAR_HEIGHT = tm.tmHeight + tm.tmExternalLeading;
 
             ReleaseDC(hwnd, hdc);
 
             // Save the width of the three columns
 
-            MAX_WIDTH = 40 * CX_CHAR + 22 * CX_CAPS;
+            MAX_COLUMN_WIDTH = 40 * CHAR_WIDTH + 22 * CAPS_WIDTH;
 
             0 as LRESULT  // message processed
         }
 
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             // Set vertical scroll bar range and page size
 
@@ -168,7 +165,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_RANGE | SIF_PAGE,
                 nMin: 0,
                 nMax: SYS_METRICS.len() as c_int - 1,
-                nPage: (CY_CLIENT / CY_CHAR) as UINT,
+                nPage: (CLIENT_HEIGHT / CHAR_HEIGHT) as UINT,
                 nPos: 0,
                 nTrackPos: 0,
             };
@@ -178,8 +175,8 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // Set horizontal scroll bar range and page size
 
             si = SCROLLINFO {
-                nMax: 2 + MAX_WIDTH / CX_CHAR,
-                nPage: (CX_CLIENT / CX_CHAR) as UINT,
+                nMax: 2 + MAX_COLUMN_WIDTH / CHAR_WIDTH,
+                nPage: (CLIENT_WIDTH / CHAR_WIDTH) as UINT,
                 ..si
             };
             SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
@@ -224,7 +221,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // If the position has changed, scroll the window.
 
             if si.nPos != vert_pos {
-                ScrollWindow(hwnd, 0, CY_CHAR * (vert_pos - si.nPos), null(), null());
+                ScrollWindow(hwnd, 0, CHAR_HEIGHT * (vert_pos - si.nPos), null(), null());
             }
 
             0 as LRESULT
@@ -264,7 +261,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // If the position has changed, scroll the window.
 
             if si.nPos != horz_pos {
-                ScrollWindow(hwnd, CX_CHAR * (horz_pos - si.nPos), 0, null(), null());
+                ScrollWindow(hwnd, CHAR_WIDTH * (horz_pos - si.nPos), 0, null(), null());
             }
 
             0 as LRESULT
@@ -309,35 +306,35 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             // Find painting limits
 
-            let paint_beg = cmp::max(0, vert_pos + ps.rcPaint.top / CY_CHAR);
-            let paint_end = cmp::min(SYS_METRICS.len() as c_int - 1, vert_pos + ps.rcPaint.bottom / CY_CHAR);
+            let paint_beg = cmp::max(0, vert_pos + ps.rcPaint.top / CHAR_HEIGHT);
+            let paint_end = cmp::min(SYS_METRICS.len() as c_int - 1, vert_pos + ps.rcPaint.bottom / CHAR_HEIGHT);
 
             for i in paint_beg..paint_end + 1 {
                 let sys_metric = &SYS_METRICS[i as usize];
-                let x = CX_CHAR * (1 - horz_pos);
-                let y = CY_CHAR * (i - vert_pos);
+                let x = CHAR_WIDTH * (1 - horz_pos);
+                let y = CHAR_HEIGHT * (i - vert_pos);
 
                 SetTextAlign(hdc, TA_LEFT | TA_TOP);
 
-                let label = to_wstring(sys_metric.label);
+                let label = to_wstr(sys_metric.label);
                 TextOutW(hdc,
                          x,
                          y,
                          label.as_ptr(),
                          lstrlenW(label.as_ptr()));
 
-                let desc = to_wstring(sys_metric.desc);
+                let desc = to_wstr(sys_metric.desc);
                 TextOutW(hdc,
-                         x + 22 * CX_CAPS,
+                         x + 22 * CAPS_WIDTH,
                          y,
                          desc.as_ptr(),
                          lstrlenW(desc.as_ptr()));
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
-                let metric = to_wstring(&format!("{:5}", GetSystemMetrics(sys_metric.index)));
+                let metric = to_wstr(&format!("{:5}", GetSystemMetrics(sys_metric.index)));
                 TextOutW(hdc,
-                         x + 22 * CX_CAPS + 40 * CX_CHAR,
+                         x + 22 * CAPS_WIDTH + 40 * CHAR_WIDTH,
                          y,
                          metric.as_ptr(),
                          lstrlenW(metric.as_ptr()));

@@ -25,20 +25,20 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WM_CREATE, WM_DESTROY, WM_PAINT,
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetStockObject, GetTextMetricsW, TextOutW, SetTextAlign, GetDeviceCaps,
+use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign, GetDeviceCaps,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP,
                          HORZSIZE, VERTSIZE, HORZRES, VERTRES, BITSPIXEL, PLANES, NUMBRUSHES,
                          NUMPENS, NUMMARKERS, NUMFONTS, NUMCOLORS, PDEVICESIZE, ASPECTX, ASPECTY,
                          ASPECTXY, LOGPIXELSX, LOGPIXELSY, SIZEPALETTE, NUMRESERVED, COLORRES, };
-use winapi::um::winbase::lstrlenW;
+use winapi::um::winbase::{lstrlenW};
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
-use winapi::shared::windef::{HWND, HBRUSH};
-use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HWND};
+use winapi::shared::ntdef::{LPCWSTR};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstring, };
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
 
 
 struct DevCaps<'a> {
@@ -74,7 +74,7 @@ const DEV_CAPS: &'static [DevCaps] = &[
 
 
 fn main() {
-    let app_name = to_wstring("dev_caps1");
+    let app_name = to_wstr("dev_caps1");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -96,13 +96,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Device Capabilities No. 1");
+        let caption = to_wstr("Device Capabilities No. 1");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -153,9 +153,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CAPS: c_int = 0;
-    static mut CX_CHAR: c_int = 0;
-    static mut CY_CHAR: c_int = 0;
+    static mut CAPS_WIDTH: c_int = 0;
+    static mut CHAR_WIDTH: c_int = 0;
+    static mut CHAR_HEIGHT: c_int = 0;
 
     match message {
         WM_CREATE => {
@@ -163,9 +163,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut tm: TEXTMETRICW = mem::uninitialized();
 
             GetTextMetricsW(hdc, &mut tm);
-            CX_CHAR = tm.tmAveCharWidth;
-            CX_CAPS = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CX_CHAR / 2;
-            CY_CHAR = tm.tmHeight + tm.tmExternalLeading;
+            CHAR_WIDTH = tm.tmAveCharWidth;
+            CAPS_WIDTH = (if tm.tmPitchAndFamily & 1 == 1 { 3 } else { 2 }) * CHAR_WIDTH / 2;
+            CHAR_HEIGHT = tm.tmHeight + tm.tmExternalLeading;
 
             ReleaseDC(hwnd, hdc);
 
@@ -180,26 +180,26 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 SetTextAlign(hdc, TA_LEFT | TA_TOP);
 
-                let label = to_wstring(dev_cap.label);
+                let label = to_wstr(dev_cap.label);
                 TextOutW(hdc,
                          0,
-                         CY_CHAR * i,
+                         CHAR_HEIGHT * i,
                          label.as_ptr(),
                          lstrlenW(label.as_ptr()));
 
-                let desc = to_wstring(dev_cap.desc);
+                let desc = to_wstr(dev_cap.desc);
                 TextOutW(hdc,
-                         14 * CX_CAPS,
-                         CY_CHAR * i,
+                         14 * CAPS_WIDTH,
+                         CHAR_HEIGHT * i,
                          desc.as_ptr(),
                          lstrlenW(desc.as_ptr()));
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
-                let cap = to_wstring(&format!("{:5}", GetDeviceCaps(hdc, dev_cap.index)));
+                let cap = to_wstr(&format!("{:5}", GetDeviceCaps(hdc, dev_cap.index)));
                 TextOutW(hdc,
-                         14 * CX_CAPS + 35 * CX_CHAR,
-                         CY_CHAR * i,
+                         14 * CAPS_WIDTH + 35 * CHAR_WIDTH,
+                         CHAR_HEIGHT * i,
                          cap.as_ptr(),
                          lstrlenW(cap.as_ptr()));
             }

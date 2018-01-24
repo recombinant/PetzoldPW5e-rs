@@ -10,7 +10,8 @@
 //
 #![windows_subsystem = "windows"]
 
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 extern crate extras;
 
 use std::mem;
@@ -25,19 +26,19 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WM_MOUSEMOVE, MK_RBUTTON, MK_LBUTTON,
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{MoveToEx, LineTo, PolyBezier, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
+use winapi::um::wingdi::{MoveToEx, LineTo, PolyBezier};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
 use winapi::shared::windef::{HWND, POINT, HDC};
-use winapi::shared::ntdef::{LPCWSTR, };
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, WHITE_PEN, BLACK_PEN, to_wstring, SelectPen, GetStockPen, GetStockBrush, };
+use extras::{WHITE_BRUSH, WHITE_PEN, BLACK_PEN, to_wstr, SelectPen, GetStockPen, GetStockBrush};
 
 
 fn main() {
-    let app_name = to_wstring("bezier");
+    let app_name = to_wstr("bezier");
     let hinstance = 0 as HINSTANCE;
 
     unsafe {
@@ -59,13 +60,13 @@ fn main() {
 
         if atom == 0 {
             MessageBoxW(null_mut(),
-                        to_wstring("This program requires Windows NT!").as_ptr(),
+                        to_wstr("This program requires Windows NT!").as_ptr(),
                         app_name.as_ptr(),
                         MB_ICONERROR);
             return; //   premature exit
         }
 
-        let caption = to_wstring("Bezier Splines");
+        let caption = to_wstr("Bezier Splines");
         let hwnd = CreateWindowExW(
             0,                   // dwExStyle:
             atom as LPCWSTR,     // lpClassName: class name or atom
@@ -116,31 +117,31 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                    wparam: WPARAM,
                                    lparam: LPARAM)
                                    -> LRESULT {
-    static mut CX_CLIENT: c_int = 0;
-    static mut CY_CLIENT: c_int = 0;
+    static mut CLIENT_WIDTH: c_int = 0;
+    static mut CLIENT_HEIGHT: c_int = 0;
     static mut BEZIER_POINTS: [POINT; 4] = [POINT { x: 0, y: 0 }; 4];
 
     match message {
         WM_SIZE => {
-            CX_CLIENT = GET_X_LPARAM(lparam);
-            CY_CLIENT = GET_Y_LPARAM(lparam);
+            CLIENT_WIDTH = GET_X_LPARAM(lparam);
+            CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
             BEZIER_POINTS = [
                 POINT {
-                    x: CX_CLIENT / 4,
-                    y: CY_CLIENT / 2,
+                    x: CLIENT_WIDTH / 4,
+                    y: CLIENT_HEIGHT / 2,
                 },
                 POINT {
-                    x: CX_CLIENT / 2,
-                    y: CY_CLIENT / 4,
+                    x: CLIENT_WIDTH / 2,
+                    y: CLIENT_HEIGHT / 4,
                 },
                 POINT {
-                    x: CX_CLIENT / 2,
-                    y: 3 * CY_CLIENT / 4,
+                    x: CLIENT_WIDTH / 2,
+                    y: 3 * CLIENT_HEIGHT / 4,
                 },
                 POINT {
-                    x: 3 * CX_CLIENT / 4,
-                    y: CY_CLIENT / 2,
+                    x: 3 * CLIENT_WIDTH / 4,
+                    y: CLIENT_HEIGHT / 2,
                 }, ];
 
             0 as LRESULT  // message processed
