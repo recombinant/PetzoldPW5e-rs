@@ -36,13 +36,14 @@ use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{LOWORD, DWORD, UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
 use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstr, GetStockBrush};
+use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstr, GetStockBrush,
+             GET_WM_HSCROLL_CODE, GET_WM_VSCROLL_CODE};
 
 
 fn main() {
@@ -196,7 +197,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             let vert_pos = si.nPos;
 
-            match LOWORD(wparam as DWORD) as LPARAM {
+            match GET_WM_VSCROLL_CODE(wparam, lparam) as LPARAM {
                 SB_TOP => { si.nPos = si.nMin; }
                 SB_BOTTOM => { si.nPos = si.nMax; }
                 SB_LINEUP => { si.nPos -= 1; }
@@ -238,7 +239,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             let horz_pos = si.nPos;
 
-            match LOWORD(wparam as DWORD) as LPARAM {
+            match GET_WM_HSCROLL_CODE(wparam, lparam) as LPARAM {
                 SB_LINELEFT => { si.nPos -= 1; }
                 SB_LINERIGHT => { si.nPos += 1; }
                 SB_PAGELEFT => { si.nPos -= si.nPage as c_int; }
@@ -267,11 +268,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut ps: PAINTSTRUCT = mem::uninitialized();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            let mut si: SCROLLINFO = mem::uninitialized();
-            si = SCROLLINFO {
+            let mut si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_POS,
-                ..si
+                ..mem::uninitialized()
             };
 
             // Get vertical scroll bar position

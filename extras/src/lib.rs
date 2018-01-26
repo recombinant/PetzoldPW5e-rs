@@ -1,16 +1,17 @@
 //
-#![cfg(windows)] extern crate winapi;
+#![cfg(windows)]
+extern crate winapi;
 
 
-use std::ptr::{null_mut, };
+use std::ptr::null_mut;
 use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
-use winapi::shared::minwindef::{LOWORD, DWORD, WPARAM, LPARAM, BOOL, HRGN, };
-use winapi::shared::windef::{HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT, };
-use winapi::um::winuser::{InflateRect, };
-use winapi::um::wingdi::{GetStockObject, SelectObject, DeleteObject, CombineRgn, 
+use winapi::shared::minwindef::{LOWORD, HIWORD, DWORD, WPARAM, LPARAM, BOOL, HRGN};
+use winapi::shared::windef::{HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT};
+use winapi::um::winuser::InflateRect;
+use winapi::um::wingdi::{GetStockObject, SelectObject, DeleteObject, CombineRgn,
                          RGN_AND, RGN_COPY, RGN_DIFF, RGN_OR, RGN_XOR, };
 
 // There are some things missing from winapi,
@@ -33,7 +34,14 @@ pub const SB_LINELEFT: c_int = winapi::um::winuser::SB_LINELEFT as c_int;
 pub const SB_LINERIGHT: c_int = winapi::um::winuser::SB_LINERIGHT as c_int;
 pub const SB_PAGELEFT: c_int = winapi::um::winuser::SB_PAGELEFT as c_int;
 pub const SB_PAGERIGHT: c_int = winapi::um::winuser::SB_PAGERIGHT as c_int;
+pub const OEM_FIXED_FONT: c_int = winapi::um::wingdi::OEM_FIXED_FONT as c_int;
+pub const ANSI_FIXED_FONT: c_int = winapi::um::wingdi::ANSI_FIXED_FONT as c_int;
+pub const ANSI_VAR_FONT: c_int = winapi::um::wingdi::ANSI_VAR_FONT as c_int;
+pub const SYSTEM_FONT: c_int = winapi::um::wingdi::SYSTEM_FONT as c_int;
+pub const DEVICE_DEFAULT_FONT: c_int = winapi::um::wingdi::DEVICE_DEFAULT_FONT as c_int;
+pub const DEFAULT_PALETTE: c_int = winapi::um::wingdi::DEFAULT_PALETTE as c_int;
 pub const SYSTEM_FIXED_FONT: c_int = winapi::um::wingdi::SYSTEM_FIXED_FONT as c_int;
+pub const DEFAULT_GUI_FONT: c_int = winapi::um::wingdi::DEFAULT_GUI_FONT as c_int;
 pub const MM_ANISOTROPIC: c_int = winapi::um::wingdi::MM_ANISOTROPIC as c_int;
 pub const MM_TEXT: c_int = winapi::um::wingdi::MM_TEXT as c_int;
 pub const MM_LOMETRIC: c_int = winapi::um::wingdi::MM_LOMETRIC as c_int;
@@ -56,14 +64,28 @@ pub fn to_wstr(str: &str) -> Vec<u16> {
 //
 #[allow(non_snake_case)]
 #[inline]
-pub fn GET_WM_VSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
+pub fn GET_WM_HSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
     LOWORD(wp as DWORD) as c_int
+}
+
+#[deprecated(note="Please use GetScrollInfo instead")]
+#[allow(non_snake_case)]
+#[inline]
+pub fn GET_WM_HSCROLL_POS(wp: WPARAM, _lp: LPARAM) -> c_int {
+    HIWORD(wp as DWORD) as c_int
 }
 
 #[allow(non_snake_case)]
 #[inline]
-pub fn GET_WM_HSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
+pub fn GET_WM_VSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
     LOWORD(wp as DWORD) as c_int
+}
+
+#[deprecated(note="Please use GetScrollInfo instead")]
+#[allow(non_snake_case)]
+#[inline]
+pub fn GET_WM_VSCROLL_POS(wp: WPARAM, _lp: LPARAM) -> c_int {
+    HIWORD(wp as DWORD) as c_int
 }
 
 //****** GDI Macro APIs ******************************************************

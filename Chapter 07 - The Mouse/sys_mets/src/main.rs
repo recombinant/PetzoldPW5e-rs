@@ -321,11 +321,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut ps: PAINTSTRUCT = mem::uninitialized();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            let mut si: SCROLLINFO = mem::uninitialized();
-            si = SCROLLINFO {
+            let mut si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_POS,
-                ..si
+                ..mem::uninitialized()
             };
 
             // Get vertical scroll bar position

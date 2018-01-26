@@ -19,30 +19,29 @@ use sys_mets_data::SYS_METRICS;
 use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int, c_short};
+use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetSystemMetrics, SetScrollRange, SetScrollPos, GetScrollPos,
+                          ReleaseDC, GetSystemMetrics, SetScrollInfo, GetScrollInfo,
                           InvalidateRect,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
+                          MSG, PAINTSTRUCT, WNDCLASSEXW, SCROLLINFO,
                           WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_VSCROLL, WS_OVERLAPPEDWINDOW,
                           WS_VSCROLL, SW_SHOW, CS_HREDRAW, CS_VREDRAW, IDC_ARROW, IDI_APPLICATION,
-                          MB_ICONERROR, CW_USEDEFAULT, SB_LINEUP, SB_LINEDOWN, SB_PAGEUP,
-                          SB_PAGEDOWN, SB_THUMBPOSITION, };
+                          MB_ICONERROR, CW_USEDEFAULT, SIF_POS, SIF_RANGE, SIF_ALL };
 use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
-use winapi::shared::minwindef::{HIWORD, LOWORD, DWORD,
-                                UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, FALSE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
 use winapi::shared::windef::HWND;
 use winapi::shared::ntdef::LPCWSTR;
 use winapi::shared::windowsx::GET_Y_LPARAM;
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, SB_VERT, to_wstr, GetStockBrush};
+use extras::{WHITE_BRUSH, SB_VERT, SB_LINEUP, SB_LINEDOWN, SB_PAGEUP, SB_PAGEDOWN, SB_THUMBPOSITION,
+             to_wstr, GetStockBrush, GET_WM_VSCROLL_CODE, };
 
 
 fn main() {
@@ -142,8 +141,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             ReleaseDC(hwnd, hdc);
 
-            SetScrollRange(hwnd, SB_VERT, 0, SYS_METRICS.len() as c_int - 1, FALSE);
-            SetScrollPos(hwnd, SB_VERT, VSCROLL_POS, TRUE);
+            let mut si: SCROLLINFO = SCROLLINFO {
+                cbSize: mem::size_of::<SCROLLINFO>() as UINT,
+                fMask: SIF_RANGE|SIF_POS,
+                nMin: 0,
+                nMax: SYS_METRICS.len() as c_int - 1,
+                nPos: VSCROLL_POS,
+                ..mem::uninitialized()
+            };
+            SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 
             0 as LRESULT  // message processed
         }
@@ -154,19 +160,37 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         }
 
         WM_VSCROLL => {
-            match LOWORD(wparam as DWORD) as LPARAM {
-                SB_LINEUP => { VSCROLL_POS -= 1; }
+
+            // Get all the vertical scroll bar information
+
+            let mut si: SCROLLINFO = SCROLLINFO {
+                cbSize: mem::size_of::<SCROLLINFO>() as UINT,
+                fMask: SIF_ALL,
+                ..mem::uninitialized()
+            };
+            GetScrollInfo(hwnd, SB_VERT, &mut si);
+
+            //formatter:off
+            match GET_WM_VSCROLL_CODE(wparam, lparam) {
+                SB_LINEUP =>   { VSCROLL_POS -= 1; }
                 SB_LINEDOWN => { VSCROLL_POS += 1; }
-                SB_PAGEUP => { VSCROLL_POS -= CLIENT_HEIGHT / CHAR_HEIGHT; }
+                SB_PAGEUP =>   { VSCROLL_POS -= CLIENT_HEIGHT / CHAR_HEIGHT; }
                 SB_PAGEDOWN => { VSCROLL_POS += CLIENT_HEIGHT / CHAR_HEIGHT; }
-                SB_THUMBPOSITION => { VSCROLL_POS = HIWORD(wparam as DWORD) as c_short as c_int; }
+                SB_THUMBPOSITION =>
+                               { VSCROLL_POS = si.nTrackPos; }
                 _ => {}
             }
+            //formatter:on
 
-            VSCROLL_POS = cmp::max(0, cmp::min(VSCROLL_POS, SYS_METRICS.len() as c_int - 1));
+            VSCROLL_POS = cmp::max(si.nMin, cmp::min(VSCROLL_POS, si.nMax));
 
-            if VSCROLL_POS != GetScrollPos(hwnd, SB_VERT) {
-                SetScrollPos(hwnd, SB_VERT, VSCROLL_POS, TRUE);
+            if VSCROLL_POS != si.nPos {
+                si = SCROLLINFO {
+                    fMask: SIF_POS,
+                    nPos: VSCROLL_POS,
+                    ..mem::uninitialized()
+                };
+                SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
                 InvalidateRect(hwnd, null(), TRUE);
             }
 
