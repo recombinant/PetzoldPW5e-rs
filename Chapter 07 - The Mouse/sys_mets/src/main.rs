@@ -39,7 +39,7 @@ use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
-use winapi::shared::windef::{HWND, };
+use winapi::shared::windef::{HWND,};
 use winapi::shared::ntdef::LPCWSTR;
 
 use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_PAGEUP,
@@ -208,7 +208,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             // Save the position for comparison later on
@@ -216,14 +215,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let vert_pos = si.nPos;
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) {
-                SB_TOP => { si.nPos = si.nMin; }
-                SB_BOTTOM => { si.nPos = si.nMax; }
-                SB_LINEUP => { si.nPos -= 1; }
+                //@formatter:off
+                SB_TOP      => { si.nPos = si.nMin; }
+                SB_BOTTOM   => { si.nPos = si.nMax; }
+                SB_LINEUP   => { si.nPos -= 1; }
                 SB_LINEDOWN => { si.nPos += 1; }
-                SB_PAGEUP => { si.nPos -= si.nPage as c_int; }
+                SB_PAGEUP   => { si.nPos -= si.nPage as c_int; }
                 SB_PAGEDOWN => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                            => { si.nPos = si.nTrackPos; }
+                _           => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -243,6 +245,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         }
 
         WM_HSCROLL => {
+
             // Get all the horizontal scroll bar information
 
             let mut si: SCROLLINFO = SCROLLINFO {
@@ -250,7 +253,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_HORZ, &mut si);
 
             // Save the position for comparison later on
@@ -258,12 +260,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let horz_pos = si.nPos;
 
             match GET_WM_HSCROLL_CODE(wparam, lparam) {
-                SB_LINELEFT => { si.nPos -= 1; }
+                //@formatter:off
+                SB_LINELEFT  => { si.nPos -= 1; }
                 SB_LINERIGHT => { si.nPos += 1; }
-                SB_PAGELEFT => { si.nPos -= si.nPage as c_int; }
+                SB_PAGELEFT  => { si.nPos -= si.nPage as c_int; }
                 SB_PAGERIGHT => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                             => { si.nPos = si.nTrackPos; }
+                _            => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -284,15 +289,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
         WM_KEYDOWN => {
             match wparam as c_int {
-                VK_HOME => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
-                VK_END => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
+                //@formatter:off
+                VK_HOME =>  { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
+                VK_END =>   { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
                 VK_PRIOR => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEUP as WPARAM, 0); }
-                VK_NEXT => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                VK_UP => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
-                VK_DOWN => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0); }
-                VK_LEFT => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0); }
+                VK_NEXT =>  { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
+                VK_UP =>    { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
+                VK_DOWN =>  { SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0); }
+                VK_LEFT =>  { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0); }
                 VK_RIGHT => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                _ => {}
+                _        => {}
+                //@formatter:on
             }
 
             0 as LRESULT  // message processed
@@ -353,15 +360,13 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 TextOutW(hdc,
                          x,
                          y,
-                         label.as_ptr(),
-                         lstrlenW(label.as_ptr()));
+                         label.as_ptr(), lstrlenW(label.as_ptr()));
 
                 let desc = to_wstr(sys_metric.desc);
                 TextOutW(hdc,
                          x + 22 * CAPS_WIDTH,
                          y,
-                         desc.as_ptr(),
-                         lstrlenW(desc.as_ptr()));
+                         desc.as_ptr(), lstrlenW(desc.as_ptr()));
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
@@ -369,8 +374,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 TextOutW(hdc,
                          x + 22 * CAPS_WIDTH + 40 * CHAR_WIDTH,
                          y,
-                         metric.as_ptr(),
-                         lstrlenW(metric.as_ptr()));
+                         metric.as_ptr(), lstrlenW(metric.as_ptr()));
             }
 
             EndPaint(hwnd, &mut ps);

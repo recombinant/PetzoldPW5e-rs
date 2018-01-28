@@ -23,7 +23,7 @@ use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetSystemMetrics, SetScrollInfo, GetScrollInfo, ScrollWindow,
+                          ReleaseDC, GetSystemMetrics, SetScrollInfo, GetScrollInfo, ScrollWindowEx,
                           SendMessageW,
                           MSG, PAINTSTRUCT, WNDCLASSEXW, SCROLLINFO,
                           WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_VSCROLL, WM_HSCROLL,
@@ -33,14 +33,14 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
                           SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_LINELEFT,
                           SB_LINERIGHT, SB_PAGEUP, SB_PAGEDOWN, SB_PAGELEFT, SB_PAGERIGHT,
-                          SB_THUMBPOSITION, SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS, };
+                          SB_THUMBPOSITION, SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS,
+                          SW_INVALIDATE, SW_ERASE, };
 use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TEXTMETRICW,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{LOWORD, DWORD,
-                                UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
 use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
@@ -194,7 +194,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             // Save the position for comparison later on
@@ -202,14 +201,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let vert_pos = si.nPos;
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) as LPARAM {
-                SB_TOP => { si.nPos = si.nMin; }
-                SB_BOTTOM => { si.nPos = si.nMax; }
-                SB_LINEUP => { si.nPos -= 1; }
+                //@formatter:off
+                SB_TOP      => { si.nPos = si.nMin; }
+                SB_BOTTOM   => { si.nPos = si.nMax; }
+                SB_LINEUP   => { si.nPos -= 1; }
                 SB_LINEDOWN => { si.nPos += 1; }
-                SB_PAGEUP => { si.nPos -= si.nPage as c_int; }
+                SB_PAGEUP   => { si.nPos -= si.nPage as c_int; }
                 SB_PAGEDOWN => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                            => { si.nPos = si.nTrackPos; }
+                _           => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -222,13 +224,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // If the position has changed, scroll the window.
 
             if si.nPos != vert_pos {
-                ScrollWindow(hwnd, 0, CHAR_HEIGHT * (vert_pos - si.nPos), null(), null());
+                // ScrollWindow(hwnd, 0, CHAR_HEIGHT * (vert_pos - si.nPos), null(), null());
+                ScrollWindowEx(hwnd,
+                               0, CHAR_HEIGHT * (vert_pos - si.nPos),
+                               null(), null(), null_mut(), null_mut(), SW_INVALIDATE | SW_ERASE);
             }
 
             0 as LRESULT
         }
 
         WM_HSCROLL => {
+
             // Get all the horizontal scroll bar information
 
             let mut si: SCROLLINFO = SCROLLINFO {
@@ -236,7 +242,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_HORZ, &mut si);
 
             // Save the position for comparison later on
@@ -244,12 +249,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let horz_pos = si.nPos;
 
             match GET_WM_HSCROLL_CODE(wparam, lparam) as LPARAM {
-                SB_LINELEFT => { si.nPos -= 1; }
+                //@formatter:off
+                SB_LINELEFT  => { si.nPos -= 1; }
                 SB_LINERIGHT => { si.nPos += 1; }
-                SB_PAGELEFT => { si.nPos -= si.nPage as c_int; }
+                SB_PAGELEFT  => { si.nPos -= si.nPage as c_int; }
                 SB_PAGERIGHT => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                             => { si.nPos = si.nTrackPos; }
+                _            => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -262,7 +270,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // If the position has changed, scroll the window.
 
             if si.nPos != horz_pos {
-                ScrollWindow(hwnd, CHAR_WIDTH * (horz_pos - si.nPos), 0, null(), null());
+                // ScrollWindow(hwnd, CHAR_WIDTH * (horz_pos - si.nPos), 0, null(), null());
+                ScrollWindowEx(hwnd,
+                               CHAR_WIDTH * (horz_pos - si.nPos), 0,
+                               null(), null(), null_mut(), null_mut(), SW_INVALIDATE | SW_ERASE);
             }
 
             0 as LRESULT
@@ -270,15 +281,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
         WM_KEYDOWN => {
             match wparam as c_int {
-                VK_HOME => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
-                VK_END => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
+                //@formatter:off
+                VK_HOME  => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
+                VK_END   => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
                 VK_PRIOR => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEUP as WPARAM, 0); }
-                VK_NEXT => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                VK_UP => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
-                VK_DOWN => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0); }
-                VK_LEFT => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0); }
+                VK_NEXT  => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
+                VK_UP    => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
+                VK_DOWN  => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0); }
+                VK_LEFT  => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0); }
                 VK_RIGHT => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                _ => {}
+                _        => {}
+                //@formatter:on
             }
 
             0 as LRESULT  // message processed

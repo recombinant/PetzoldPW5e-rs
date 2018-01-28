@@ -216,14 +216,14 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         WM_KEYDOWN => {
             match wparam as c_int {
                 //@formatter:off
-                VK_HOME =>  { CARET_X = 0; }
-                VK_END =>   { CARET_X = BUFFER_X_DIM - 1; }
+                VK_HOME  => { CARET_X = 0; }
+                VK_END   => { CARET_X = BUFFER_X_DIM - 1; }
                 VK_PRIOR => { CARET_Y = 0; }
-                VK_NEXT =>  { CARET_Y = BUFFER_Y_DIM - 1; }
-                VK_LEFT =>  { CARET_X = cmp::max(CARET_X - 1, 0); }
+                VK_NEXT  => { CARET_Y = BUFFER_Y_DIM - 1; }
+                VK_LEFT  => { CARET_X = cmp::max(CARET_X - 1, 0); }
                 VK_RIGHT => { CARET_X = cmp::min(CARET_X + 1, BUFFER_X_DIM - 1); }
-                VK_UP =>    { CARET_Y = cmp::max(CARET_Y - 1, 0); }
-                VK_DOWN =>  { CARET_Y = cmp::min(CARET_Y + 1, BUFFER_Y_DIM - 1); }
+                VK_UP    => { CARET_Y = cmp::max(CARET_Y - 1, 0); }
+                VK_DOWN  => { CARET_Y = cmp::min(CARET_Y + 1, BUFFER_Y_DIM - 1); }
                 //@formatter:on
                 VK_DELETE => {
                     BUFFER_VEC.with(|v| {

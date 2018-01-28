@@ -170,14 +170,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) {
-                SB_TOP => { si.nPos = si.nMin; }
-                SB_BOTTOM => { si.nPos = si.nMax; }
+                //@formatter:off
+                SB_TOP      => { si.nPos = si.nMin; }
+                SB_BOTTOM   => { si.nPos = si.nMax; }
                 SB_LINEUP |
-                SB_PAGEUP => { si.nPos -= 1; }
+                SB_PAGEUP   => { si.nPos -= 1; }
                 SB_LINEDOWN |
                 SB_PAGEDOWN => { si.nPos += 1; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                            => { si.nPos = si.nTrackPos; }
+                _           => {}
+                //@formatter:on
             }
 
             // Because messages are sent from WM_KEYDOWN which has
@@ -199,15 +202,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
         WM_KEYDOWN => {
             match wparam as c_int {
-                VK_HOME => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
-                VK_END => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
+                //@formatter:off
+                VK_HOME  => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
+                VK_END   => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
                 VK_PRIOR |
                 VK_LEFT |
-                VK_UP => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
+                VK_UP    => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
                 VK_NEXT |
                 VK_RIGHT |
-                VK_DOWN => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                _ => {}
+                VK_DOWN  => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
+                _        => {}
+                //@formatter:on
             }
 
             0 as LRESULT  // message processed

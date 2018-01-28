@@ -170,17 +170,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             };
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
-            //formatter:off
             match GET_WM_VSCROLL_CODE(wparam, lparam) {
-                SB_LINEUP =>   { VSCROLL_POS -= 1; }
+                //@formatter:off
+                SB_LINEUP   => { VSCROLL_POS -= 1; }
                 SB_LINEDOWN => { VSCROLL_POS += 1; }
-                SB_PAGEUP =>   { VSCROLL_POS -= CLIENT_HEIGHT / CHAR_HEIGHT; }
+                SB_PAGEUP   => { VSCROLL_POS -= CLIENT_HEIGHT / CHAR_HEIGHT; }
                 SB_PAGEDOWN => { VSCROLL_POS += CLIENT_HEIGHT / CHAR_HEIGHT; }
-                SB_THUMBPOSITION =>
-                               { VSCROLL_POS = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                            => { VSCROLL_POS = si.nTrackPos; }
+                _           => {}
+                //@formatter:on
             }
-            //formatter:on
 
             VSCROLL_POS = cmp::max(si.nMin, cmp::min(VSCROLL_POS, si.nMax));
 

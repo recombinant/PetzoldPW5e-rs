@@ -15,6 +15,7 @@ extern crate winapi;
 extern crate extras;
 
 use std::cell::RefCell;
+use std::cmp;
 use std::mem;
 use std::collections::VecDeque;
 use std::ptr::{null_mut, null};
@@ -22,7 +23,7 @@ use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetSystemMetrics, InvalidateRect, ScrollWindow,
+                          ReleaseDC, GetSystemMetrics, InvalidateRect, ScrollWindowEx,
                           GetKeyNameTextW,
                           MSG, PAINTSTRUCT, WNDCLASSEXW,
                           WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_KEYFIRST,
@@ -30,7 +31,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           WM_SYSKEYDOWN, WM_SYSKEYUP, WM_SYSCHAR, WM_SYSDEADCHAR,
                           WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          SM_CXMAXIMIZED, SM_CYMAXIMIZED, };
+                          SM_CXMAXIMIZED, SM_CYMAXIMIZED, SW_INVALIDATE, SW_ERASE, };
 use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetBkMode,
                          TEXTMETRICW, };
 use winapi::um::winbase::lstrlenW;
@@ -165,7 +166,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 ReleaseDC(hwnd, hdc);
 
-                MAX_LINES = (MAX_CLIENT_HEIGHT / CHAR_HEIGHT).abs() as usize;
+                MAX_LINES = cmp::max((MAX_CLIENT_HEIGHT / CHAR_HEIGHT - 2).abs(), 2) as usize;
                 MSG_VEC.with(|v| v.borrow_mut().clear());
             } else {  // message == WM_SIZE
 
@@ -217,7 +218,11 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             // Scroll up the display
 
-            ScrollWindow(hwnd, 0, -CHAR_HEIGHT, &SCROLL_RECT, &SCROLL_RECT);
+            // ScrollWindow(hwnd, 0, -CHAR_HEIGHT, &SCROLL_RECT, &SCROLL_RECT);
+            ScrollWindowEx(hwnd,
+                           0, -CHAR_HEIGHT,
+                           &SCROLL_RECT, &SCROLL_RECT,
+                           null_mut(), null_mut(), SW_INVALIDATE|SW_ERASE);
 
             // call DefWindowProc so Sys messages work
             DefWindowProcW(hwnd, message, wparam, lparam)

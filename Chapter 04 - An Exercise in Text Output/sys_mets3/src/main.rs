@@ -190,7 +190,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             // Save the position for comparison later on
@@ -198,14 +197,17 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let vert_pos = si.nPos;
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) as LPARAM {
-                SB_TOP => { si.nPos = si.nMin; }
-                SB_BOTTOM => { si.nPos = si.nMax; }
-                SB_LINEUP => { si.nPos -= 1; }
+                //@formatter:off
+                SB_TOP      => { si.nPos = si.nMin; }
+                SB_BOTTOM   => { si.nPos = si.nMax; }
+                SB_LINEUP   => { si.nPos -= 1; }
                 SB_LINEDOWN => { si.nPos += 1; }
-                SB_PAGEUP => { si.nPos -= si.nPage as c_int; }
+                SB_PAGEUP   => { si.nPos -= si.nPage as c_int; }
                 SB_PAGEDOWN => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
-                _ => {}
+                SB_THUMBPOSITION
+                            => { si.nPos = si.nTrackPos; }
+                _           => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -225,6 +227,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         }
 
         WM_HSCROLL => {
+
             // Get all the horizontal scroll bar information
 
             let mut si: SCROLLINFO = SCROLLINFO {
@@ -232,7 +235,6 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 fMask: SIF_ALL,
                 ..mem::uninitialized()
             };
-
             GetScrollInfo(hwnd, SB_HORZ, &mut si);
 
             // Save the position for comparison later on
@@ -240,12 +242,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let horz_pos = si.nPos;
 
             match GET_WM_HSCROLL_CODE(wparam, lparam) as LPARAM {
-                SB_LINELEFT => { si.nPos -= 1; }
+                //@formatter:off
+                SB_LINELEFT  => { si.nPos -= 1; }
                 SB_LINERIGHT => { si.nPos += 1; }
-                SB_PAGELEFT => { si.nPos -= si.nPage as c_int; }
+                SB_PAGELEFT  => { si.nPos -= si.nPage as c_int; }
                 SB_PAGERIGHT => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION => { si.nPos = si.nTrackPos; }
+                SB_THUMBPOSITION
+                             => { si.nPos = si.nTrackPos; }
                 _ => {}
+                //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
