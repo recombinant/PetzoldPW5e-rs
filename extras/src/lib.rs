@@ -8,18 +8,23 @@ use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
-use winapi::shared::minwindef::{LOWORD, HIWORD, DWORD, WPARAM, LPARAM, BOOL, HRGN};
-use winapi::shared::windef::{HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT};
-use winapi::um::winuser::InflateRect;
+use winapi::shared::minwindef::{LOWORD, HIWORD, MAKELONG, WORD, DWORD, WPARAM, LPARAM, BOOL, HRGN,
+                                HMODULE};
+use winapi::shared::windef::{HWND, HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT};
+use winapi::um::winuser::{InflateRect, GetWindowLongPtrW, GWLP_HINSTANCE, };
 use winapi::um::wingdi::{GetStockObject, SelectObject, DeleteObject, CombineRgn,
                          RGN_AND, RGN_COPY, RGN_DIFF, RGN_OR, RGN_XOR, };
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
+pub const NULL_BRUSH: c_int = winapi::um::wingdi::NULL_BRUSH as c_int;
 pub const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
+pub const BLACK_BRUSH: c_int = winapi::um::wingdi::BLACK_BRUSH as c_int;
 pub const GRAY_BRUSH: c_int = winapi::um::wingdi::GRAY_BRUSH as c_int;
 pub const WHITE_PEN: c_int = winapi::um::wingdi::WHITE_PEN as c_int;
 pub const BLACK_PEN: c_int = winapi::um::wingdi::BLACK_PEN as c_int;
+
+pub const PS_DASH: c_int = winapi::um::wingdi::PS_DASH as c_int;
 
 pub const SB_VERT: c_int = winapi::um::winuser::SB_VERT as c_int;
 pub const SB_HORZ: c_int = winapi::um::winuser::SB_HORZ as c_int;
@@ -58,17 +63,28 @@ pub fn to_wstr(str: &str) -> Vec<u16> {
     OsStr::new(str).encode_wide().chain(once(0)).collect()
 }
 
+#[allow(non_snake_case)]
+#[inline]
+pub fn MAKELPARAM(l: WORD, h: WORD) -> LPARAM {
+    MAKELONG(l, h) as DWORD as LPARAM
+}
 
 // These came from windowx.h and should ideally be in
 // winapi::shared::windowsx
 //
 #[allow(non_snake_case)]
 #[inline]
+pub fn GetWindowInstance(hwnd: HWND) -> HMODULE {
+    unsafe { GetWindowLongPtrW(hwnd, GWLP_HINSTANCE) as HMODULE }
+}
+
+#[allow(non_snake_case)]
+#[inline]
 pub fn GET_WM_HSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
     LOWORD(wp as DWORD) as c_int
 }
 
-#[deprecated(note="Please use GetScrollInfo instead")]
+#[deprecated(note = "Please use GetScrollInfo instead")]
 #[allow(non_snake_case)]
 #[inline]
 pub fn GET_WM_HSCROLL_POS(wp: WPARAM, _lp: LPARAM) -> c_int {
@@ -81,7 +97,7 @@ pub fn GET_WM_VSCROLL_CODE(wp: WPARAM, _lp: LPARAM) -> c_int {
     LOWORD(wp as DWORD) as c_int
 }
 
-#[deprecated(note="Please use GetScrollInfo instead")]
+#[deprecated(note = "Please use GetScrollInfo instead")]
 #[allow(non_snake_case)]
 #[inline]
 pub fn GET_WM_VSCROLL_POS(wp: WPARAM, _lp: LPARAM) -> c_int {
