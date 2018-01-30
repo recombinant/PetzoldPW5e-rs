@@ -148,7 +148,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                       3 * CLIENT_WIDTH / 4, 3 * CLIENT_HEIGHT / 4,
                       CLIENT_WIDTH / 4, CLIENT_HEIGHT / 4);
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

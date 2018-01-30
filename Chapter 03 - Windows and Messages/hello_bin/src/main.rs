@@ -151,7 +151,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             DrawTextW(hdc, to_wstr("Hello, Windows 98!").as_ptr(), -1, &mut rect,
                       DT_SINGLELINE | DT_CENTER | DT_VCENTER);
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
         WM_DESTROY => {

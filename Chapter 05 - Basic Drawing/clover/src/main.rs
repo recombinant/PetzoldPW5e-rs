@@ -179,7 +179,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                        (radius * angle.cos() + 0.5) as c_int,
                        (-radius * angle.sin() + 0.5) as c_int);
             }
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

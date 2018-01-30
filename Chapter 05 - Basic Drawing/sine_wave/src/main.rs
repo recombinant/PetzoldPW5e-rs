@@ -147,7 +147,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             Polyline(hdc, &SINE_POINTS[0], SINE_POINTS.len() as c_int);
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

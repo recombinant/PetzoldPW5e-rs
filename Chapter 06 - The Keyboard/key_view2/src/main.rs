@@ -18,6 +18,8 @@ use std::cell::RefCell;
 use std::mem;
 use std::collections::VecDeque;
 use std::ptr::{null_mut, null};
+use std::ffi::OsString;
+use std::os::windows::ffi::OsStringExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
@@ -257,7 +259,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                                win_text.as_mut_ptr(),
                                                win_text.len() as c_int);
                     let key_name = if size > 0 {
-                        String::from_utf16(&win_text[..size as usize]).unwrap()
+                        OsString::from_wide(&win_text[..size as usize]).into_string().unwrap()
                     } else {
                         String::from("")
                     };
@@ -311,7 +313,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // Delete font recently created by CreateFont()
             DeleteFont(SelectFont(hdc, GetStockFont(SYSTEM_FONT)));
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 

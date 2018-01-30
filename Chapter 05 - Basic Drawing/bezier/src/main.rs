@@ -177,7 +177,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             draw_bezier(hdc, &BEZIER_POINTS);
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

@@ -214,7 +214,7 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
                 LineTo(hdc, rect.right, 0);
             }
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),

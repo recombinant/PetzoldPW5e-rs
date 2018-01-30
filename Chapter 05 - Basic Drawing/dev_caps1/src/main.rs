@@ -204,7 +204,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                          lstrlenW(cap.as_ptr()));
             }
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
         WM_DESTROY => {

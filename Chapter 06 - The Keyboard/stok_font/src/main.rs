@@ -17,6 +17,8 @@ extern crate extras;
 use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
+use std::ffi::OsString;
+use std::os::windows::ffi::OsStringExt;
 use winapi::ctypes::c_int;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, SendMessageW, TranslateMessage,
@@ -227,7 +229,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let mut face_name_buffer: Vec<u16> = vec![0; LF_FACESIZE];
             let size = GetTextFaceW(hdc, LF_FACESIZE as c_int, face_name_buffer.as_mut_ptr());
             let face_name = if size > 0 {
-                String::from_utf16(&face_name_buffer[..size as usize]).unwrap()
+                OsString::from_wide(&face_name_buffer[..size as usize]).into_string().unwrap()
             } else {
                 String::from("")
             };
@@ -275,7 +277,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                              (y + 3) * y_grid + 2, &c, 1);
                 }
             }
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 

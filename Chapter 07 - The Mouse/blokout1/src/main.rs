@@ -197,7 +197,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 Rectangle(hdc, BEGIN_POINT.x, BEGIN_POINT.y, END_POINT.x, END_POINT.y);
             }
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 

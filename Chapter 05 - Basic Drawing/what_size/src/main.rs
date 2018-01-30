@@ -163,7 +163,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             show(hwnd, hdc, 1, 7, MM_HIENGLISH, &"HIENGLISH (.001 in)");
             show(hwnd, hdc, 1, 8, MM_TWIPS, &"TWIPS (1/1440 in)");
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

@@ -181,7 +181,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             ShowCursor(FALSE);
             SetCursor(LoadCursorW(null_mut(), IDC_ARROW));
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 

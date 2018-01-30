@@ -156,7 +156,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             SetPolyFillMode(hdc, WINDING);
             Polygon(hdc, &poly_points[0], poly_points.len() as c_int);
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
 
             0 as LRESULT  // message processed
         }

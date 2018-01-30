@@ -377,7 +377,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                          metric.as_ptr(), lstrlenW(metric.as_ptr()));
             }
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 

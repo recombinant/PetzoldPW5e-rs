@@ -366,7 +366,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // Delete font recently created by CreateFont()
             DeleteFont(SelectFont(hdc, GetStockFont(SYSTEM_FONT)));
 
-            EndPaint(hwnd, &mut ps);
+            EndPaint(hwnd, &ps);
             0 as LRESULT  // message processed
         }
 
