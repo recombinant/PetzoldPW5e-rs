@@ -3,7 +3,7 @@
 extern crate winapi;
 
 
-use std::ptr::null_mut;
+use std::ptr::{null_mut, null};
 use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
@@ -11,9 +11,15 @@ use winapi::ctypes::c_int;
 use winapi::shared::minwindef::{LOWORD, HIWORD, MAKELONG, WORD, DWORD, WPARAM, LPARAM, BOOL, HRGN,
                                 HMODULE};
 use winapi::shared::windef::{HWND, HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT};
+use winapi::shared::ntdef::{LPCWSTR, };
 use winapi::um::winuser::{InflateRect, GetWindowLongPtrW, GWLP_HINSTANCE, };
 use winapi::um::wingdi::{GetStockObject, SelectObject, DeleteObject, CombineRgn,
                          RGN_AND, RGN_COPY, RGN_DIFF, RGN_OR, RGN_XOR, };
+use winapi::um::winnls::LCTYPE;
+
+// This should be in winapi::um::winnls
+pub const LOCALE_STIMEFORMAT: LCTYPE = 0x00001003;
+pub const LOCALE_NAME_USER_DEFAULT: LPCWSTR = null();
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
@@ -21,6 +27,7 @@ pub const NULL_BRUSH: c_int = winapi::um::wingdi::NULL_BRUSH as c_int;
 pub const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
 pub const BLACK_BRUSH: c_int = winapi::um::wingdi::BLACK_BRUSH as c_int;
 pub const GRAY_BRUSH: c_int = winapi::um::wingdi::GRAY_BRUSH as c_int;
+pub const NULL_PEN: c_int = winapi::um::wingdi::NULL_PEN as c_int;
 pub const WHITE_PEN: c_int = winapi::um::wingdi::WHITE_PEN as c_int;
 pub const BLACK_PEN: c_int = winapi::um::wingdi::BLACK_PEN as c_int;
 
@@ -47,6 +54,7 @@ pub const DEVICE_DEFAULT_FONT: c_int = winapi::um::wingdi::DEVICE_DEFAULT_FONT a
 pub const DEFAULT_PALETTE: c_int = winapi::um::wingdi::DEFAULT_PALETTE as c_int;
 pub const SYSTEM_FIXED_FONT: c_int = winapi::um::wingdi::SYSTEM_FIXED_FONT as c_int;
 pub const DEFAULT_GUI_FONT: c_int = winapi::um::wingdi::DEFAULT_GUI_FONT as c_int;
+pub const MM_ISOTROPIC: c_int = winapi::um::wingdi::MM_ISOTROPIC as c_int;
 pub const MM_ANISOTROPIC: c_int = winapi::um::wingdi::MM_ANISOTROPIC as c_int;
 pub const MM_TEXT: c_int = winapi::um::wingdi::MM_TEXT as c_int;
 pub const MM_LOMETRIC: c_int = winapi::um::wingdi::MM_LOMETRIC as c_int;

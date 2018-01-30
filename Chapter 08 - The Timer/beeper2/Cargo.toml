@@ -1,7 +1,8 @@
 [package]
-name = "extras"
+name = "beeper2"
 version = "0.1.0"
 authors = ["recombinant <gituser@recombinant.me.uk>"]
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "*", features = ["winuser", "winbase", "windowsx", "winnls"] }
+winapi = { version = "*", features = ["winuser","winbase"] }
+extras = { path = "../../extras" }
