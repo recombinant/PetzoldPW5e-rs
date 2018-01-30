@@ -29,6 +29,7 @@ design choices in Windows.
 And don't forget the functions and structures that have been superseded:
 
 - RegisterClass, WNDCLASS
+- GetLocaleInfo, LOCALE_SDATE, LOCALE_STIME, LOCALE_IDATE, LOCALE_ILDATE, LOCALE_ITIME, LOCALE_ITIMEMARKPOSN, LOCALE_ICENTURY, LOCALE_ITLZERO, LOCALE_IDAYLZERO, LOCALE_IMONLZERO
 - ScrollWindow
 - GetScrollPos, SetScrollPos, GetScrollRange, SetScrollRange
 - KP_SALT
