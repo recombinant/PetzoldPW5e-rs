@@ -20,6 +20,7 @@ use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage,
                           RegisterClassExW, ShowWindow, UpdateWindow,
                           GetMessageW, TranslateMessage, DispatchMessageW,
@@ -33,7 +34,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage,
                           CW_USEDEFAULT, DT_SINGLELINE, DT_CENTER, DT_VCENTER, };
 use winapi::um::wingdi::GetStockObject;
 use winapi::um::playsoundapi::{PlaySoundW, SND_FILENAME, SND_ASYNC};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT};
 use winapi::shared::windef::{HWND, HBRUSH, HICON, RECT};
 use winapi::shared::ntdef::LPCWSTR;
 
@@ -51,9 +52,10 @@ pub fn to_wstr(str: &str) -> Vec<u16> {
 
 fn main() {
     let app_name = to_wstr("hello_win");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

@@ -17,6 +17,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::{c_int, };
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -26,7 +27,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{Rectangle, MoveToEx, LineTo};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, FALSE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, FALSE};
 use winapi::shared::windef::{HWND, RECT};
 use winapi::shared::ntdef::{LPCWSTR, };
 
@@ -37,9 +38,10 @@ const DIVISIONS: usize = 5;
 
 fn main() {
     let app_name = to_wstr("checker1");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

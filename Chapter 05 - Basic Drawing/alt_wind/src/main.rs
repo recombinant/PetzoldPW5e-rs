@@ -17,6 +17,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::{c_int};
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -26,7 +27,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{GetStockObject, SelectObject, Polygon, SetPolyFillMode,
                          ALTERNATE, WINDING, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
 use winapi::shared::windef::{HWND, POINT};
 use winapi::shared::ntdef::LPCWSTR;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
@@ -38,9 +39,10 @@ use extras::{WHITE_BRUSH, GRAY_BRUSH, to_wstr, GetStockBrush};
 
 fn main() {
     let app_name = to_wstr("alt_wind");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

@@ -21,6 +21,7 @@ use std::ptr::{null_mut, null};
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
@@ -38,7 +39,7 @@ use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetBkMode, CreateFontW,
                          TEXTMETRICW, DEFAULT_CHARSET, FIXED_PITCH, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{HIWORD, LOWORD, DWORD, UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
+use winapi::shared::minwindef::{HIWORD, LOWORD, DWORD, UINT, WPARAM, LPARAM, LRESULT, TRUE};
 use winapi::shared::windef::{HWND, RECT, POINT};
 use winapi::shared::ntdef::{LPCWSTR, LONG};
 
@@ -50,9 +51,10 @@ use extras::{WHITE_BRUSH, TRANSPARENT,
 
 fn main() {
     let app_name = to_wstr("key_view2");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

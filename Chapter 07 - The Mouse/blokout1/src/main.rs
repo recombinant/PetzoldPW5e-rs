@@ -16,6 +16,7 @@ extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -26,7 +27,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           IDC_ARROW, IDC_CROSS, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{Rectangle, SetROP2, R2_NOT, };
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE};
 use winapi::shared::windef::{HWND, POINT, HDC };
 use winapi::shared::ntdef::{LPCWSTR, };
 
@@ -35,9 +36,10 @@ use extras::{WHITE_BRUSH, BLACK_BRUSH, NULL_BRUSH, to_wstr, GetStockBrush, Selec
 
 fn main() {
     let app_name = to_wstr("blokout1");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

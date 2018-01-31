@@ -20,6 +20,7 @@ use std::mem;
 use std::cmp;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
@@ -40,7 +41,7 @@ use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
                          TA_LEFT, TA_RIGHT, TA_TOP, };
 use winapi::um::winbase::lstrlenW;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE};
 use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 
@@ -52,9 +53,10 @@ use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstr, GetStockBrush,
 
 fn main() {
     let app_name = to_wstr("sys_mets4");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

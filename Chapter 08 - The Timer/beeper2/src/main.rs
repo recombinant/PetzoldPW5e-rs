@@ -16,6 +16,7 @@ extern crate extras;
 
 use std::mem;
 use std::ptr::{null_mut, null};
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           MessageBoxW, LoadIconW, LoadCursorW, KillTimer,
@@ -24,7 +25,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           SW_SHOW, CS_HREDRAW,
                           CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
 use winapi::um::wingdi::{CreateSolidBrush, RGB, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, DWORD, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, DWORD, };
 use winapi::shared::windef::{HWND, RECT, HDC, HBRUSH, };
 use winapi::shared::ntdef::{LPCWSTR, };
 use winapi::shared::basetsd::{UINT_PTR, };
@@ -39,9 +40,10 @@ const ID_TIMER: usize = 1;
 
 fn main() {
     let app_name = to_wstr("sys_mets2");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

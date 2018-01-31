@@ -17,6 +17,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
@@ -27,7 +28,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, MK_LBUTTON, IDC_WAIT, };
 use winapi::um::wingdi::{MoveToEx, LineTo, SetPixel};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, FALSE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE};
 use winapi::shared::windef::{HWND, POINT};
 use winapi::shared::ntdef::LPCWSTR;
 
@@ -38,9 +39,10 @@ const MAX_POINTS: usize = 100;
 
 fn main() {
     let app_name = to_wstr("connect");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

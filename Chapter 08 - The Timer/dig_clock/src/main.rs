@@ -19,6 +19,7 @@ use std::ptr::{null_mut, null};
 use std::ffi::OsString;
 use std::os::windows::ffi::OsStringExt;
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
@@ -33,7 +34,7 @@ use winapi::um::wingdi::{CreateSolidBrush, RGB,
 use winapi::um::winnls::{GetLocaleInfoEx, };
 use winapi::um::minwinbase::{SYSTEMTIME, };
 use winapi::um::sysinfoapi::{ GetLocalTime, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, };
 use winapi::shared::windef::{HWND, HBRUSH, POINT, HDC, };
 use winapi::shared::ntdef::LPCWSTR;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
@@ -50,9 +51,10 @@ const ID_TIMER: usize = 1;
 
 fn main() {
     let app_name = to_wstr("dig_clock");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

@@ -19,6 +19,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::{c_int, c_long, };
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           SendMessageW, MoveWindow, GetClientRect,
@@ -34,7 +35,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           GWL_ID, };
 use winapi::um::wingdi::{Rectangle, MoveToEx, LineTo, CreatePen, };
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, TRUE, FALSE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE, };
 use winapi::shared::windef::{HWND, RECT, HMENU, };
 use winapi::shared::ntdef::{LPCWSTR, };
 
@@ -50,10 +51,11 @@ static mut FOCUS_ID: c_int = 0;
 
 fn main() {
     let app_name = to_wstr("checker3");
-    let hinstance = 0 as HINSTANCE;
     let child_class_name = to_wstr(CHILD_CLASS_NAME);
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let mut wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

@@ -4,6 +4,6 @@ version = "0.1.0"
 authors = ["recombinant <gituser@recombinant.me.uk>"]
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "*", features = ["winuser", "winbase", "windowsx"] }
+winapi = { version = "*", features = ["libloaderapi", ] }
 sys_mets_data = { path = "../sys_mets_data" }
 extras = { path = "../../extras" }

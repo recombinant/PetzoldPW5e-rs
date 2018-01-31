@@ -16,6 +16,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::c_int;
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, SetCursor,
@@ -27,7 +28,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           IDC_WAIT, };
 use winapi::um::wingdi::{MoveToEx, LineTo, CreateEllipticRgn,
                          CreateRectRgn, SelectClipRgn, SetViewportOrgEx, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE, HRGN, FALSE, TRUE, };
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HRGN, FALSE, TRUE, };
 use winapi::shared::windef::{HWND, };
 use winapi::shared::ntdef::LPCWSTR;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM, };
@@ -39,9 +40,10 @@ use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, UnionRgn, XorRgn, DeleteRgn, }
 
 fn main() {
     let app_name = to_wstr("clover");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,

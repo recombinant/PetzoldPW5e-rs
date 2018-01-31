@@ -17,6 +17,7 @@ extern crate extras;
 use std::mem;
 use std::ptr::{null_mut, null};
 use winapi::ctypes::{c_int};
+use winapi::um::libloaderapi::GetModuleHandleW;
 use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
@@ -32,7 +33,7 @@ use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign, GetDeviceCaps,
                          NUMPENS, NUMMARKERS, NUMFONTS, NUMCOLORS, PDEVICESIZE, ASPECTX, ASPECTY,
                          ASPECTXY, LOGPIXELSX, LOGPIXELSY, SIZEPALETTE, NUMRESERVED, COLORRES, };
 use winapi::um::winbase::{lstrlenW};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, HINSTANCE};
+use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
 use winapi::shared::windef::{HWND};
 use winapi::shared::ntdef::{LPCWSTR};
 
@@ -75,9 +76,10 @@ const DEV_CAPS: &'static [DevCaps] = &[
 
 fn main() {
     let app_name = to_wstr("dev_caps1");
-    let hinstance = 0 as HINSTANCE;
 
     unsafe {
+        let hinstance = GetModuleHandleW(null());
+
         let wndclassex = WNDCLASSEXW {
             cbSize: mem::size_of::<WNDCLASSEXW>() as UINT,
             style: CS_HREDRAW | CS_VREDRAW,
