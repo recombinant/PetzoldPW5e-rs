@@ -25,7 +25,7 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           MoveWindow, GetClientRect,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
                           InvalidateRect, MessageBeep,
-                          GetWindowLongW, SetWindowLongW,
+                          GetWindowLongPtrW, SetWindowLongPtrW,
                           MSG, PAINTSTRUCT, WNDCLASSEXW, WM_DESTROY, WM_PAINT, WM_SIZE,
                           WM_CREATE, WM_LBUTTONDOWN,
                           WS_OVERLAPPEDWINDOW, WS_CHILDWINDOW, WS_VISIBLE,
@@ -37,7 +37,7 @@ use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE, };
 use winapi::shared::windef::{HWND, RECT, HMENU, };
 use winapi::shared::ntdef::{LPCWSTR, };
 
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, GetWindowInstance};
+use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, GetWindowInstance, GWLP_USERDATA, };
 
 
 const DIVISIONS: usize = 5;
@@ -191,12 +191,12 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
                                          -> LRESULT {
     match message {
         WM_CREATE => {
-            SetWindowLongW(hwnd, 0, 0);       // on/off flag
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);       // on/off flag
             0 as LRESULT  // message processed
         }
 
         WM_LBUTTONDOWN => {
-            SetWindowLongW(hwnd, 0, 1 ^ GetWindowLongW(hwnd, 0));
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA));
             InvalidateRect(hwnd, null(), FALSE);
             0 as LRESULT  // message processed
         }
@@ -209,7 +209,7 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
             GetClientRect(hwnd, &mut rect);
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
 
-            if GetWindowLongW(hwnd, 0) != 0 {
+            if GetWindowLongPtrW(hwnd, GWLP_USERDATA) != 0 {
                 MoveToEx(hdc, 0, 0, null_mut());
                 LineTo(hdc, rect.right, rect.bottom);
                 MoveToEx(hdc, 0, rect.bottom, null_mut());

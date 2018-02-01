@@ -12,7 +12,7 @@ use winapi::shared::minwindef::{LOWORD, HIWORD, MAKELONG, WORD, DWORD, WPARAM, L
                                 HMODULE};
 use winapi::shared::windef::{HWND, HDC, HGDIOBJ, HPEN, HBRUSH, HFONT, HPALETTE, HBITMAP, LPRECT};
 use winapi::shared::ntdef::{LPCWSTR, };
-use winapi::um::winuser::{InflateRect, GetWindowLongPtrW, GWLP_HINSTANCE, };
+use winapi::um::winuser::{InflateRect, GetWindowLongPtrW };
 use winapi::um::wingdi::{GetStockObject, SelectObject, DeleteObject, CombineRgn,
                          RGN_AND, RGN_COPY, RGN_DIFF, RGN_OR, RGN_XOR, };
 use winapi::um::winnls::LCTYPE;
@@ -22,47 +22,102 @@ pub const LOCALE_STIMEFORMAT: LCTYPE = 0x00001003;
 pub const LOCALE_NAME_USER_DEFAULT: LPCWSTR = null();
 
 // There are some things missing from winapi,
-// and some that have been given an interesting interpretation
-pub const NULL_BRUSH: c_int = winapi::um::wingdi::NULL_BRUSH as c_int;
-pub const WHITE_BRUSH: c_int = winapi::um::wingdi::WHITE_BRUSH as c_int;
-pub const BLACK_BRUSH: c_int = winapi::um::wingdi::BLACK_BRUSH as c_int;
-pub const GRAY_BRUSH: c_int = winapi::um::wingdi::GRAY_BRUSH as c_int;
-pub const NULL_PEN: c_int = winapi::um::wingdi::NULL_PEN as c_int;
-pub const WHITE_PEN: c_int = winapi::um::wingdi::WHITE_PEN as c_int;
-pub const BLACK_PEN: c_int = winapi::um::wingdi::BLACK_PEN as c_int;
+// some are here to prevent the older 32 bit values being used accidentally
+// and some that have been given an interesting interpretation are
+// reinterpreted here.
+pub const GWLP_WNDPROC        : c_int = -4;
+pub const GWLP_HINSTANCE      : c_int = -6;  // Use GetWindowInstance()
+pub const GWLP_HWNDPARENT     : c_int = -8;  // Use SetParent()
+pub const GWL_STYLE           : c_int = -16;
+pub const GWL_EXSTYLE         : c_int = -20;
+pub const GWLP_USERDATA       : c_int = -21;
+pub const GWLP_ID             : c_int = -12;
 
-pub const PS_DASH: c_int = winapi::um::wingdi::PS_DASH as c_int;
+pub const GCLP_MENUNAME       : c_int = -8;
+pub const GCLP_HBRBACKGROUND  : c_int = -10;
+pub const GCLP_HCURSOR        : c_int = -12;
+pub const GCLP_HICON          : c_int = -14;
+pub const GCLP_HMODULE        : c_int = -16;
+pub const GCL_CBWNDEXTRA      : c_int = -18;
+pub const GCL_CBCLSEXTRA      : c_int = -20;
+pub const GCL_STYLE           : c_int = -26;
+pub const GCLP_WNDPROC        : c_int = -24;
+pub const GCLP_HICONSM        : c_int = -34;
 
-pub const SB_VERT: c_int = winapi::um::winuser::SB_VERT as c_int;
-pub const SB_HORZ: c_int = winapi::um::winuser::SB_HORZ as c_int;
-pub const SB_TOP: c_int = winapi::um::winuser::SB_TOP as c_int;
-pub const SB_BOTTOM: c_int = winapi::um::winuser::SB_BOTTOM as c_int;
-pub const SB_LINEUP: c_int = winapi::um::winuser::SB_LINEUP as c_int;
-pub const SB_LINEDOWN: c_int = winapi::um::winuser::SB_LINEDOWN as c_int;
-pub const SB_PAGEUP: c_int = winapi::um::winuser::SB_PAGEUP as c_int;
-pub const SB_PAGEDOWN: c_int = winapi::um::winuser::SB_PAGEDOWN as c_int;
-pub const SB_THUMBPOSITION: c_int = winapi::um::winuser::SB_THUMBPOSITION as c_int;
-pub const SB_LINELEFT: c_int = winapi::um::winuser::SB_LINELEFT as c_int;
-pub const SB_LINERIGHT: c_int = winapi::um::winuser::SB_LINERIGHT as c_int;
-pub const SB_PAGELEFT: c_int = winapi::um::winuser::SB_PAGELEFT as c_int;
-pub const SB_PAGERIGHT: c_int = winapi::um::winuser::SB_PAGERIGHT as c_int;
-pub const OEM_FIXED_FONT: c_int = winapi::um::wingdi::OEM_FIXED_FONT as c_int;
-pub const ANSI_FIXED_FONT: c_int = winapi::um::wingdi::ANSI_FIXED_FONT as c_int;
-pub const ANSI_VAR_FONT: c_int = winapi::um::wingdi::ANSI_VAR_FONT as c_int;
-pub const SYSTEM_FONT: c_int = winapi::um::wingdi::SYSTEM_FONT as c_int;
-pub const DEVICE_DEFAULT_FONT: c_int = winapi::um::wingdi::DEVICE_DEFAULT_FONT as c_int;
-pub const DEFAULT_PALETTE: c_int = winapi::um::wingdi::DEFAULT_PALETTE as c_int;
-pub const SYSTEM_FIXED_FONT: c_int = winapi::um::wingdi::SYSTEM_FIXED_FONT as c_int;
-pub const DEFAULT_GUI_FONT: c_int = winapi::um::wingdi::DEFAULT_GUI_FONT as c_int;
-pub const MM_ISOTROPIC: c_int = winapi::um::wingdi::MM_ISOTROPIC as c_int;
-pub const MM_ANISOTROPIC: c_int = winapi::um::wingdi::MM_ANISOTROPIC as c_int;
-pub const MM_TEXT: c_int = winapi::um::wingdi::MM_TEXT as c_int;
-pub const MM_LOMETRIC: c_int = winapi::um::wingdi::MM_LOMETRIC as c_int;
-pub const MM_HIMETRIC: c_int = winapi::um::wingdi::MM_HIMETRIC as c_int;
-pub const MM_LOENGLISH: c_int = winapi::um::wingdi::MM_LOENGLISH as c_int;
-pub const MM_HIENGLISH: c_int = winapi::um::wingdi::MM_HIENGLISH as c_int;
-pub const MM_TWIPS: c_int = winapi::um::wingdi::MM_TWIPS as c_int;
-pub const TRANSPARENT: c_int = winapi::um::wingdi::TRANSPARENT as c_int;
+pub const GCW_ATOM            : c_int = -32;
+
+pub const TRANSPARENT : c_int = 1;
+pub const OPAQUE      : c_int = 2;
+pub const BKMODE_LAST : c_int = 2;
+
+pub const MM_TEXT        : c_int = 1;
+pub const MM_LOMETRIC    : c_int = 2;
+pub const MM_HIMETRIC    : c_int = 3;
+pub const MM_LOENGLISH   : c_int = 4;
+pub const MM_HIENGLISH   : c_int = 5;
+pub const MM_TWIPS       : c_int = 6;
+pub const MM_ISOTROPIC   : c_int = 7;
+pub const MM_ANISOTROPIC : c_int = 8;
+
+pub const MM_MIN            : c_int = MM_TEXT;
+pub const MM_MAX            : c_int = MM_ANISOTROPIC;
+pub const MM_MAX_FIXEDSCALE : c_int = MM_TWIPS;
+
+pub const ABSOLUTE : c_int = 1;
+pub const RELATIVE : c_int = 2;
+
+pub const WHITE_BRUSH         : c_int = 0;
+pub const LTGRAY_BRUSH        : c_int = 1;
+pub const GRAY_BRUSH          : c_int = 2;
+pub const DKGRAY_BRUSH        : c_int = 3;
+pub const BLACK_BRUSH         : c_int = 4;
+pub const NULL_BRUSH          : c_int = 5;
+pub const HOLLOW_BRUSH        : c_int = NULL_BRUSH;
+pub const WHITE_PEN           : c_int = 6;
+pub const BLACK_PEN           : c_int = 7;
+pub const NULL_PEN            : c_int = 8;
+pub const OEM_FIXED_FONT      : c_int = 10;
+pub const ANSI_FIXED_FONT     : c_int = 11;
+pub const ANSI_VAR_FONT       : c_int = 12;
+pub const SYSTEM_FONT         : c_int = 13;
+pub const DEVICE_DEFAULT_FONT : c_int = 14;
+pub const DEFAULT_PALETTE     : c_int = 15;
+pub const SYSTEM_FIXED_FONT   : c_int = 16;
+pub const DEFAULT_GUI_FONT    : c_int = 17;
+pub const DC_BRUSH            : c_int = 18;
+pub const DC_PEN              : c_int = 19;
+pub const STOCK_LAST          : c_int = 19;
+
+pub const PS_SOLID       : c_int = 0;
+pub const PS_DASH        : c_int = 1;
+pub const PS_DOT         : c_int = 2;
+pub const PS_DASHDOT     : c_int = 3;
+pub const PS_DASHDOTDOT  : c_int = 4;
+pub const PS_NULL        : c_int = 5;
+pub const PS_INSIDEFRAME : c_int = 6;
+pub const PS_USERSTYLE   : c_int = 7;
+pub const PS_ALTERNATE   : c_int = 8;
+
+pub const SB_HORZ          : c_int = 0;
+pub const SB_VERT          : c_int = 1;
+pub const SB_CTL           : c_int = 2;
+pub const SB_BOTH          : c_int = 3;
+
+pub const SB_LINEUP        : c_int = 0;
+pub const SB_LINELEFT      : c_int = 0;
+pub const SB_LINEDOWN      : c_int = 1;
+pub const SB_LINERIGHT     : c_int = 1;
+pub const SB_PAGEUP        : c_int = 2;
+pub const SB_PAGELEFT      : c_int = 2;
+pub const SB_PAGEDOWN      : c_int = 3;
+pub const SB_PAGERIGHT     : c_int = 3;
+pub const SB_THUMBPOSITION : c_int = 4;
+pub const SB_THUMBTRACK    : c_int = 5;
+pub const SB_TOP           : c_int = 6;
+pub const SB_LEFT          : c_int = 6;
+pub const SB_BOTTOM        : c_int = 7;
+pub const SB_RIGHT         : c_int = 7;
+pub const SB_ENDSCROLL     : c_int = 8;
 
 // This performs the conversion from Rust str to Windows WSTR
 // Use this function to convert and then use its returned value's .as_ptr()

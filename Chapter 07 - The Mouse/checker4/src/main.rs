@@ -24,15 +24,14 @@ use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, Regi
                           ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
                           SendMessageW, MoveWindow, GetClientRect,
                           BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          InvalidateRect, MessageBeep,
-                          GetWindowLongW, SetWindowLongW, SetFocus, GetFocus, GetDlgItem, GetParent,
+                          InvalidateRect, MessageBeep, GetWindowLongPtrW, SetWindowLongPtrW,
+                          SetFocus, GetFocus, GetDlgItem, GetParent,
                           MSG, PAINTSTRUCT, WNDCLASSEXW, WM_DESTROY, WM_PAINT, WM_SIZE,
                           WM_CREATE, WM_SETFOCUS, WM_KILLFOCUS, WM_KEYDOWN, WM_LBUTTONDOWN,
                           WS_OVERLAPPEDWINDOW, WS_CHILDWINDOW, WS_VISIBLE,
-                          SW_SHOW, CS_HREDRAW, CS_VREDRAW,
-                          IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME, VK_END, VK_RETURN, VK_SPACE,
-                          GWL_ID, };
+                          SW_SHOW, CS_HREDRAW, CS_VREDRAW, IDC_ARROW, IDI_APPLICATION,
+                          MB_ICONERROR, CW_USEDEFAULT, VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_HOME,
+                          VK_END, VK_RETURN, VK_SPACE, };
 use winapi::um::wingdi::{Rectangle, MoveToEx, LineTo, CreatePen, };
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
 use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE, };
@@ -41,7 +40,7 @@ use winapi::shared::ntdef::{LPCWSTR, };
 
 use extras::{NULL_BRUSH, WHITE_BRUSH, BLACK_PEN, PS_DASH,
              to_wstr, GetStockBrush, SelectBrush, SelectPen, GetStockPen, DeletePen,
-             GetWindowInstance, };
+             GetWindowInstance, GWLP_ID, GWLP_USERDATA, };
 
 
 const DIVISIONS: usize = 5;
@@ -231,7 +230,7 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
                                          -> LRESULT {
     match message {
         WM_CREATE => {
-            SetWindowLongW(hwnd, 0, 0);       // on/off flag
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);       // on/off flag
             0 as LRESULT  // message processed
         }
 
@@ -245,14 +244,14 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
             }
             // For Return and Space, fall through to toggle the square
 
-            SetWindowLongW(hwnd, 0, 1 ^ GetWindowLongW(hwnd, 0));
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA));
             InvalidateRect(hwnd, null(), FALSE);
             0 as LRESULT  // message processed
         }
 
         WM_SETFOCUS | WM_KILLFOCUS => {
             if message == WM_SETFOCUS {
-                FOCUS_ID = GetWindowLongW(hwnd, GWL_ID);
+                FOCUS_ID = GetWindowLongPtrW(hwnd, GWLP_ID) as c_int;
             }
             InvalidateRect(hwnd, null(), TRUE);
             0 as LRESULT  // message processed
@@ -266,7 +265,7 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
             GetClientRect(hwnd, &mut rect);
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
 
-            if GetWindowLongW(hwnd, 0) != 0 {
+            if GetWindowLongPtrW(hwnd, GWLP_USERDATA) != 0 {
                 MoveToEx(hdc, 0, 0, null_mut());
                 LineTo(hdc, rect.right, rect.bottom);
                 MoveToEx(hdc, 0, rect.bottom, null_mut());
