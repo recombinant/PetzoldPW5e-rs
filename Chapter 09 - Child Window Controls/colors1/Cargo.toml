@@ -1,0 +1,8 @@
+[package]
+name = "colors1"
+version = "0.1.0"
+authors = ["recombinant <gituser@recombinant.me.uk>"]
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "*", features = ["libloaderapi", "commctrl", ] }
+extras = { path = "../../extras" }
