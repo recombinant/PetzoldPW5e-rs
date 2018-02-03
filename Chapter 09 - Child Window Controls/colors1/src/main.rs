@@ -57,6 +57,8 @@ use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, DeleteBrush, GetWindowInstance
 const NUM_CTRLS: usize = 3;
 static mut ID_FOCUS: usize = 0;
 
+const ID_SCROLL_PROC: usize = 1;  // SetWindowSubclass/RemoveWindowSubclass
+
 
 fn main() {
     let app_name = to_wstr("colors1");
@@ -211,7 +213,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                                                hwnd, (i + 6) as HMENU,
                                                hinstance, null_mut());
 
-                SetWindowSubclass(HWND_SCROLL[i], Some(scroll_proc), 0, 0);
+                SetWindowSubclass(HWND_SCROLL[i], Some(scroll_proc), ID_SCROLL_PROC, 0);
 
                 HBRUSH_ARRAY[i] = CreateSolidBrush(PRIMARY_COLORS[i]);
             }
@@ -379,7 +381,7 @@ unsafe extern "system" fn scroll_proc(hwnd: HWND,
         }
 
         WM_NCDESTROY => {
-            RemoveWindowSubclass(hwnd, Some(scroll_proc), 1);
+            RemoveWindowSubclass(hwnd, Some(scroll_proc), ID_SCROLL_PROC);
         }
 
         _ => {}
