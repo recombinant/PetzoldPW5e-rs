@@ -160,8 +160,9 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             CHAR_X = LOWORD(GetDialogBaseUnits() as DWORD) as c_int;
             CHAR_Y = HIWORD(GetDialogBaseUnits() as DWORD) as c_int;
 
+            let text = to_wstr("button");
+
             for (i, btn) in BUTTONS.iter().enumerate() {
-                let text = to_wstr("button");
                 let btn_text = to_wstr(btn.text);
                 HWND_BUTTON[i] = CreateWindowExW(
                     0,                            // dwExStyle
