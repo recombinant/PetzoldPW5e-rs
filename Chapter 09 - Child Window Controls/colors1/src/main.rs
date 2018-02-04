@@ -57,8 +57,6 @@ use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, DeleteBrush, GetWindowInstance
 const NUM_CTRLS: usize = 3;
 static mut ID_FOCUS: usize = 0;
 
-const ID_SCROLL_PROC: usize = 1;  // SetWindowSubclass/RemoveWindowSubclass
-
 
 fn main() {
     let app_name = to_wstr("colors1");
@@ -201,7 +199,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 HWND_LABEL[i] = CreateWindowExW(0, text.as_ptr(), text_rgb[i].as_ptr(),
                                                WS_CHILD | WS_VISIBLE | SS_CENTER,
                                                0, 0, 0, 0,
-                                               hwnd, (i + 3) as HMENU,
+                                               hwnd, (i + NUM_CTRLS) as HMENU,
                                                hinstance, null_mut());
 
                 // The three CTRL_COLOR-value text fields have IDs 6, 7,
@@ -210,10 +208,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 HWND_VALUE[i] = CreateWindowExW(0, text.as_ptr(), text_zero.as_ptr(),
                                                WS_CHILD | WS_VISIBLE | SS_CENTER,
                                                0, 0, 0, 0,
-                                               hwnd, (i + 6) as HMENU,
+                                               hwnd, (i + 2 * NUM_CTRLS) as HMENU,
                                                hinstance, null_mut());
 
-                SetWindowSubclass(HWND_SCROLL[i], Some(scroll_proc), ID_SCROLL_PROC, 0);
+                SetWindowSubclass(HWND_SCROLL[i], Some(scroll_proc), i, 0);
 
                 HBRUSH_ARRAY[i] = CreateSolidBrush(PRIMARY_COLORS[i]);
             }
@@ -381,7 +379,7 @@ unsafe extern "system" fn scroll_proc(hwnd: HWND,
         }
 
         WM_NCDESTROY => {
-            RemoveWindowSubclass(hwnd, Some(scroll_proc), ID_SCROLL_PROC);
+            RemoveWindowSubclass(hwnd, Some(scroll_proc), id as UINT_PTR);
         }
 
         _ => {}
