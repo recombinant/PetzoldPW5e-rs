@@ -8,12 +8,12 @@
 // CLOCK.C −− Analog Clock Program
 //            (c) Charles Petzold, 1998
 //
-#![feature(iterator_step_by)]
 #![windows_subsystem = "windows"]
 
 #![cfg(windows)]
 extern crate winapi;
 extern crate extras;
+extern crate num;
 
 use std::mem;
 use std::f64::consts::PI;
@@ -214,7 +214,7 @@ unsafe fn set_isotropic(hdc: HDC, client_width: c_int, client_height: c_int) {
 unsafe fn draw_clock(hdc: HDC) {
     let mut pt: [POINT; 3] = mem::uninitialized();
 
-    for angle in (0..360).step_by(6) {
+    for angle in num::iter::range_step(0, 360, 6) {
         pt[0].x = 0;
         pt[0].y = 900;
 
