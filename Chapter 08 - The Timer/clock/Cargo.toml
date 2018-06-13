@@ -6,3 +6,4 @@ authors = ["recombinant <gituser@recombinant.me.uk>"]
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "*", features = ["libloaderapi", "sysinfoapi", ] }
 extras = { path = "../../extras" }
+num = "*"
