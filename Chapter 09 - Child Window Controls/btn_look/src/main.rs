@@ -9,39 +9,35 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null, };
-use winapi::ctypes::{c_int, };
+use std::ptr::{null, null_mut};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{DWORD, HIWORD, LOWORD, LPARAM, LRESULT, TRUE, UINT, WPARAM};
+use winapi::shared::ntdef::{LONG, LPCWSTR};
+use winapi::shared::windef::{HDC, HMENU, HWND, RECT};
 use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          GetDialogBaseUnits, InvalidateRect, ScrollWindowEx, GetDC, ReleaseDC,
-                          ValidateRect,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW, LPCREATESTRUCTW,
-                          WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_DRAWITEM, WM_COMMAND,
-                          WS_OVERLAPPEDWINDOW, WS_VISIBLE, WS_CHILD, SW_SHOW, SW_INVALIDATE,
-                          SW_ERASE, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          BS_PUSHBUTTON, BS_DEFPUSHBUTTON, BS_CHECKBOX, BS_AUTOCHECKBOX,
-                          BS_RADIOBUTTON, BS_3STATE, BS_AUTO3STATE, BS_GROUPBOX, BS_AUTORADIOBUTTON,
-                          BS_OWNERDRAW, };
-use winapi::um::wingdi::{SetBkMode, TextOutW, };
-use winapi::shared::minwindef::{UINT, DWORD, WPARAM, LPARAM, LRESULT, HIWORD, LOWORD,
-                                TRUE, };
-use winapi::shared::windef::{HWND, RECT, HMENU, HDC};
-use winapi::shared::ntdef::{LPCWSTR, LONG};
+use winapi::um::wingdi::{SetBkMode, TextOutW};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC,
+    GetDialogBaseUnits, GetMessageW, InvalidateRect, LoadCursorW, LoadIconW, MessageBoxW,
+    PostQuitMessage, RegisterClassExW, ReleaseDC, ScrollWindowEx, ShowWindow, TranslateMessage,
+    UpdateWindow, ValidateRect, BS_3STATE, BS_AUTO3STATE, BS_AUTOCHECKBOX, BS_AUTORADIOBUTTON,
+    BS_CHECKBOX, BS_DEFPUSHBUTTON, BS_GROUPBOX, BS_OWNERDRAW, BS_PUSHBUTTON, BS_RADIOBUTTON,
+    CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDI_APPLICATION, LPCREATESTRUCTW,
+    MB_ICONERROR, MSG, PAINTSTRUCT, SW_ERASE, SW_INVALIDATE, SW_SHOW, WM_COMMAND, WM_CREATE,
+    WM_DESTROY, WM_DRAWITEM, WM_PAINT, WM_SIZE, WNDCLASSEXW, WS_CHILD, WS_OVERLAPPEDWINDOW,
+    WS_VISIBLE,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, SelectFont, GetStockFont,
-             TRANSPARENT, SYSTEM_FIXED_FONT, };
-
+use extras::{
+    to_wstr, GetStockBrush, GetStockFont, SelectFont, SYSTEM_FIXED_FONT, TRANSPARENT, WHITE_BRUSH,
+};
 
 const BUTTON_COUNT: usize = 10;
 
@@ -51,18 +47,47 @@ pub struct Button<'a> {
 }
 
 pub const BUTTONS: &'static [Button; BUTTON_COUNT] = &[
-    Button { style: BS_PUSHBUTTON, text: "PUSHBUTTON" },
-    Button { style: BS_DEFPUSHBUTTON, text: "DEFPUSHBUTTON" },
-    Button { style: BS_CHECKBOX, text: "CHECKBOX" },
-    Button { style: BS_AUTOCHECKBOX, text: "AUTOCHECKBOX" },
-    Button { style: BS_RADIOBUTTON, text: "RADIOBUTTON" },
-    Button { style: BS_3STATE, text: "3STATE" },
-    Button { style: BS_AUTO3STATE, text: "AUTO3STATE" },
-    Button { style: BS_GROUPBOX, text: "GROUPBOX" },
-    Button { style: BS_AUTORADIOBUTTON, text: "AUTORADIO" },
-    Button { style: BS_OWNERDRAW, text: "OWNERDRAW" }
+    Button {
+        style: BS_PUSHBUTTON,
+        text: "PUSHBUTTON",
+    },
+    Button {
+        style: BS_DEFPUSHBUTTON,
+        text: "DEFPUSHBUTTON",
+    },
+    Button {
+        style: BS_CHECKBOX,
+        text: "CHECKBOX",
+    },
+    Button {
+        style: BS_AUTOCHECKBOX,
+        text: "AUTOCHECKBOX",
+    },
+    Button {
+        style: BS_RADIOBUTTON,
+        text: "RADIOBUTTON",
+    },
+    Button {
+        style: BS_3STATE,
+        text: "3STATE",
+    },
+    Button {
+        style: BS_AUTO3STATE,
+        text: "AUTO3STATE",
+    },
+    Button {
+        style: BS_GROUPBOX,
+        text: "GROUPBOX",
+    },
+    Button {
+        style: BS_AUTORADIOBUTTON,
+        text: "AUTORADIO",
+    },
+    Button {
+        style: BS_OWNERDRAW,
+        text: "OWNERDRAW",
+    },
 ];
-
 
 fn main() {
     let app_name = to_wstr("btn_look");
@@ -87,11 +112,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Button Look");
@@ -107,18 +134,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -135,25 +163,28 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CHAR_X: c_int = 0;
     static mut CHAR_Y: c_int = 0;
-    static mut TARGET_RECT: RECT = RECT { left: 0, top: 0, right: 0, bottom: 0 };
+    static mut TARGET_RECT: RECT = RECT {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+    };
     static mut HWND_BUTTON: [HWND; BUTTON_COUNT] = [null_mut(); BUTTON_COUNT];
 
     static HEADER1: &'static str = "message            wParam       lParam";
     static HEADER2: &'static str = "_______            ______       ______";
-
-
 
     match message {
         WM_CREATE => {
@@ -165,20 +196,22 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             for (i, btn) in BUTTONS.iter().enumerate() {
                 let btn_text = to_wstr(btn.text);
                 HWND_BUTTON[i] = CreateWindowExW(
-                    0,                            // dwExStyle
-                    text.as_ptr(),                // lpClassName
-                    btn_text.as_ptr(),            // lpWindowName
+                    0,                                 // dwExStyle
+                    text.as_ptr(),                     // lpClassName
+                    btn_text.as_ptr(),                 // lpWindowName
                     WS_CHILD | WS_VISIBLE | btn.style, // dwStyle
-                    CHAR_X, CHAR_Y * (1 + 2 * i as c_int), // x, y
-                    20 * CHAR_X, 7 * CHAR_Y / 4,  // nWidth, nHeight
-                    hwnd,                         // hwndParent
-                    i as HMENU,                   // hMenu
-                    (*(lparam as LPCREATESTRUCTW)).hInstance,  // hInstance
-                    null_mut());                  // lpParam
+                    CHAR_X,
+                    CHAR_Y * (1 + 2 * i as c_int), // x, y
+                    20 * CHAR_X,
+                    7 * CHAR_Y / 4,                           // nWidth, nHeight
+                    hwnd,                                     // hwndParent
+                    i as HMENU,                               // hMenu
+                    (*(lparam as LPCREATESTRUCTW)).hInstance, // hInstance
+                    null_mut(),
+                ); // lpParam
             }
 
-
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SIZE => {
@@ -186,55 +219,83 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             TARGET_RECT.top = 2 * CHAR_Y;
             TARGET_RECT.right = LOWORD(lparam as DWORD) as LONG;
             TARGET_RECT.bottom = HIWORD(lparam as DWORD) as LONG;
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
             InvalidateRect(hwnd, &TARGET_RECT, TRUE);
 
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
             SelectFont(hdc, GetStockFont(SYSTEM_FIXED_FONT));
             SetBkMode(hdc, TRANSPARENT);
 
             let header1 = to_wstr(HEADER1);
             let header2 = to_wstr(HEADER2);
-            TextOutW(hdc, 24 * CHAR_X, CHAR_Y, header1.as_ptr(), header1.len() as c_int);
-            TextOutW(hdc, 24 * CHAR_X, CHAR_Y, header2.as_ptr(), header2.len() as c_int);
+            TextOutW(
+                hdc,
+                24 * CHAR_X,
+                CHAR_Y,
+                header1.as_ptr(),
+                header1.len() as c_int,
+            );
+            TextOutW(
+                hdc,
+                24 * CHAR_X,
+                CHAR_Y,
+                header2.as_ptr(),
+                header2.len() as c_int,
+            );
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DRAWITEM | WM_COMMAND => {
             // ScrollWindow(hwnd, 0, -CHAR_Y, &TARGET_RECT, &TARGET_RECT);
-            ScrollWindowEx(hwnd,
-                           0, -CHAR_Y,
-                           &TARGET_RECT, &TARGET_RECT, null_mut(), null_mut(), SW_INVALIDATE | SW_ERASE);
+            ScrollWindowEx(
+                hwnd,
+                0,
+                -CHAR_Y,
+                &TARGET_RECT,
+                &TARGET_RECT,
+                null_mut(),
+                null_mut(),
+                SW_INVALIDATE | SW_ERASE,
+            );
 
             let hdc: HDC = GetDC(hwnd);
             SelectFont(hdc, GetStockFont(SYSTEM_FIXED_FONT));
 
             let text = to_wstr(&format!(
                 "{:-16}{:04X}-{:04X}    {:04X}-{:04X}",
-                if message == WM_DRAWITEM { "WM_DRAWITEM" } else { "WM_COMMAND" },
-                HIWORD(wparam as DWORD), LOWORD(wparam as DWORD),
-                HIWORD(lparam as DWORD), LOWORD(lparam as DWORD)));
+                if message == WM_DRAWITEM {
+                    "WM_DRAWITEM"
+                } else {
+                    "WM_COMMAND"
+                },
+                HIWORD(wparam as DWORD),
+                LOWORD(wparam as DWORD),
+                HIWORD(lparam as DWORD),
+                LOWORD(lparam as DWORD)
+            ));
 
-            TextOutW(hdc,
-                     24 * CHAR_X,
-                     CHAR_Y * (TARGET_RECT.bottom / CHAR_Y - 1),
-                     text.as_ptr(),
-                     text.len() as c_int);
+            TextOutW(
+                hdc,
+                24 * CHAR_X,
+                CHAR_Y * (TARGET_RECT.bottom / CHAR_Y - 1),
+                text.as_ptr(),
+                text.len() as c_int,
+            );
 
             ReleaseDC(hwnd, hdc);
             ValidateRect(hwnd, &TARGET_RECT);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

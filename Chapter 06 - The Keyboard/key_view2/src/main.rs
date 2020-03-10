@@ -9,45 +9,43 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::cell::RefCell;
-use std::mem;
 use std::collections::VecDeque;
-use std::ptr::{null_mut, null};
 use std::ffi::OsString;
+use std::mem;
 use std::os::windows::ffi::OsStringExt;
+use std::ptr::{null, null_mut};
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetSystemMetrics, InvalidateRect, ScrollWindow,
-                          GetKeyNameTextW,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_KEYFIRST,
-                          WM_DISPLAYCHANGE, WM_KEYDOWN, WM_KEYUP, WM_CHAR, WM_DEADCHAR,
-                          WM_SYSKEYDOWN, WM_SYSKEYUP, WM_SYSCHAR, WM_SYSDEADCHAR,
-                          WM_INPUTLANGCHANGE,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          SM_CXMAXIMIZED, SM_CYMAXIMIZED, };
-use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetBkMode, CreateFontW,
-                         TEXTMETRICW, DEFAULT_CHARSET, FIXED_PITCH, };
-use winapi::um::winbase::lstrlenW;
+use winapi::shared::minwindef::{DWORD, HIWORD, LOWORD, LPARAM, LRESULT, TRUE, UINT, WPARAM};
+use winapi::shared::ntdef::{LONG, LPCWSTR};
+use winapi::shared::windef::{HWND, POINT, RECT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{HIWORD, LOWORD, DWORD, UINT, WPARAM, LPARAM, LRESULT, TRUE};
-use winapi::shared::windef::{HWND, RECT, POINT};
-use winapi::shared::ntdef::{LPCWSTR, LONG};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::winbase::lstrlenW;
+use winapi::um::wingdi::{
+    CreateFontW, GetTextMetricsW, SetBkMode, TextOutW, DEFAULT_CHARSET, FIXED_PITCH, TEXTMETRICW,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC,
+    GetKeyNameTextW, GetMessageW, GetSystemMetrics, InvalidateRect, LoadCursorW, LoadIconW,
+    MessageBoxW, PostQuitMessage, RegisterClassExW, ReleaseDC, ScrollWindow, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SM_CXMAXIMIZED, SM_CYMAXIMIZED, SW_SHOW,
+    WM_CHAR, WM_CREATE, WM_DEADCHAR, WM_DESTROY, WM_DISPLAYCHANGE, WM_INPUTLANGCHANGE, WM_KEYDOWN,
+    WM_KEYFIRST, WM_KEYUP, WM_PAINT, WM_SIZE, WM_SYSCHAR, WM_SYSDEADCHAR, WM_SYSKEYDOWN,
+    WM_SYSKEYUP, WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, TRANSPARENT,
-             to_wstr, GetStockBrush, SelectFont, GetStockFont, DeleteFont, SYSTEM_FONT, };
-
+use extras::{
+    to_wstr, DeleteFont, GetStockBrush, GetStockFont, SelectFont, SYSTEM_FONT, TRANSPARENT,
+    WHITE_BRUSH,
+};
 
 fn main() {
     let app_name = to_wstr("key_view2");
@@ -72,38 +70,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Keyboard Message Viewer #2");
         let hwnd = CreateWindowExW(
-            0,                 // dwExStyle:
-            atom as LPCWSTR,   // lpClassName: class name or atom
-            caption.as_ptr(),  // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,     // x: initial x position
-            CW_USEDEFAULT,     // y: initial y position
-            CW_USEDEFAULT,     // nWidth: initial x size
-            CW_USEDEFAULT,     // nHeight: initial y size
-            null_mut(),        // hWndParent: parent window handle
-            null_mut(),        // hMenu: window menu handle
-            hinstance,         // hInstance: program instance handle
-            null_mut());       // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -120,15 +121,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CHAR_SET: DWORD = DEFAULT_CHARSET;
     static mut MAX_CLIENT_WIDTH: c_int = 0;
     static mut MAX_CLIENT_HEIGHT: c_int = 0;
@@ -137,12 +139,27 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
     static mut CHAR_WIDTH: c_int = 0;
     static mut CHAR_HEIGHT: c_int = 0;
     static mut MAX_LINES: usize = 0;
-    static mut SCROLL_RECT: RECT = RECT { left: 0, right: 0, top: 0, bottom: 0 };
-    static HEADER1: &'static str = "Message        Key       Char     Repeat Scan Ext ALT Prev Tran";
-    static HEADER2: &'static str = "_______        ___       ____     ______ ____ ___ ___ ____ ____";
+    static mut SCROLL_RECT: RECT = RECT {
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    };
+    static HEADER1: &'static str =
+        "Message        Key       Char     Repeat Scan Ext ALT Prev Tran";
+    static HEADER2: &'static str =
+        "_______        ___       ____     ______ ____ ___ ___ ____ ____";
 
-    static KEY_STRINGS: &'static [&'static str] = &["WM_KEYDOWN", "WM_KEYUP", "WM_CHAR",
-        "WM_DEADCHAR", "WM_SYSKEYDOWN", "WM_SYSKEYUP", "WM_SYSCHAR", "WM_SYSDEADCHAR"];
+    static KEY_STRINGS: &'static [&'static str] = &[
+        "WM_KEYDOWN",
+        "WM_KEYUP",
+        "WM_CHAR",
+        "WM_DEADCHAR",
+        "WM_SYSKEYDOWN",
+        "WM_SYSKEYUP",
+        "WM_SYSCHAR",
+        "WM_SYSDEADCHAR",
+    ];
 
     // This thread_local! macro contains the code that replaces the
     // malloc/free in the original C code. If in doubt there is help within
@@ -169,10 +186,27 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 // Get character size for fixed−pitch font
 
                 let hdc = GetDC(hwnd);
-                let mut tm: TEXTMETRICW = mem::uninitialized();
+                let mut tm: TEXTMETRICW = mem::MaybeUninit::uninit().assume_init();
 
-                SelectFont(hdc, CreateFontW(0, 0, 0, 0, 0, 0, 0, 0,
-                                            CHAR_SET, 0, 0, 0, FIXED_PITCH, null()));
+                SelectFont(
+                    hdc,
+                    CreateFontW(
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        CHAR_SET,
+                        0,
+                        0,
+                        0,
+                        FIXED_PITCH,
+                        null(),
+                    ),
+                );
                 GetTextMetricsW(hdc, &mut tm);
                 CHAR_WIDTH = tm.tmAveCharWidth;
                 CHAR_HEIGHT = tm.tmHeight + tm.tmExternalLeading;
@@ -183,7 +217,8 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 MAX_LINES = (MAX_CLIENT_HEIGHT / CHAR_HEIGHT).abs() as usize;
                 MSG_VEC.with(|v| v.borrow_mut().clear());
-            } else {  // message == WM_SIZE
+            } else {
+                // message == WM_SIZE
 
                 CLIENT_WIDTH = GET_X_LPARAM(lparam);
                 CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
@@ -200,18 +235,11 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             InvalidateRect(hwnd, null_mut(), TRUE);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
-        WM_KEYDOWN |
-        WM_KEYUP |
-        WM_CHAR |
-        WM_DEADCHAR |
-        WM_SYSKEYDOWN |
-        WM_SYSKEYUP |
-        WM_SYSCHAR |
-        WM_SYSDEADCHAR => {
-
+        WM_KEYDOWN | WM_KEYUP | WM_CHAR | WM_DEADCHAR | WM_SYSKEYDOWN | WM_SYSKEYUP
+        | WM_SYSCHAR | WM_SYSDEADCHAR => {
             // Rearrange storage array, limit to MAX_LINES elements.
 
             if MAX_LINES == MSG_VEC.with(|v| v.borrow().len()) {
@@ -220,7 +248,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             // Store new message
 
-            let mut msg: MSG = MSG {
+            let msg: MSG = MSG {
                 hwnd,
                 message,
                 wParam: wparam,
@@ -240,62 +268,135 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            SelectFont(hdc, CreateFontW(0, 0, 0, 0, 0, 0, 0, 0,
-                                        CHAR_SET, 0, 0, 0, FIXED_PITCH, null()));
+            SelectFont(
+                hdc,
+                CreateFontW(
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    CHAR_SET,
+                    0,
+                    0,
+                    0,
+                    FIXED_PITCH,
+                    null(),
+                ),
+            );
 
             SetBkMode(hdc, TRANSPARENT);
             let top_string = to_wstr(HEADER1);
             let und_string = to_wstr(HEADER2);
-            TextOutW(hdc, 0, 0, top_string.as_ptr(), lstrlenW(top_string.as_ptr()));
-            TextOutW(hdc, 0, 0, und_string.as_ptr(), lstrlenW(und_string.as_ptr()));
+            TextOutW(
+                hdc,
+                0,
+                0,
+                top_string.as_ptr(),
+                lstrlenW(top_string.as_ptr()),
+            );
+            TextOutW(
+                hdc,
+                0,
+                0,
+                und_string.as_ptr(),
+                lstrlenW(und_string.as_ptr()),
+            );
 
             // Accessing the VecDeque withing the Thread Local Storage (TLS)
             // has to take place within the context of the .with() method.
             MSG_VEC.with(|v| {
                 v.borrow().iter().enumerate().for_each(|(i, msg)| {
                     let mut win_text: Vec<u16> = vec![0; 32];
-                    let size = GetKeyNameTextW(msg.lParam as LONG,
-                                               win_text.as_mut_ptr(),
-                                               win_text.len() as c_int);
+                    let size = GetKeyNameTextW(
+                        msg.lParam as LONG,
+                        win_text.as_mut_ptr(),
+                        win_text.len() as c_int,
+                    );
                     let key_name = if size > 0 {
-                        OsString::from_wide(&win_text[..size as usize]).into_string().unwrap()
+                        OsString::from_wide(&win_text[..size as usize])
+                            .into_string()
+                            .unwrap()
                     } else {
                         String::from("")
                     };
 
                     let m = msg.message;
-                    let fmt_idx: usize = if
-                        m == WM_CHAR ||
-                            m == WM_SYSCHAR ||
-                            m == WM_DEADCHAR ||
-                            m == WM_SYSDEADCHAR { 1 } else { 0 };
+                    let fmt_idx: usize = if m == WM_CHAR
+                        || m == WM_SYSCHAR
+                        || m == WM_DEADCHAR
+                        || m == WM_SYSDEADCHAR
+                    {
+                        1
+                    } else {
+                        0
+                    };
 
                     let buffer: String;
                     if fmt_idx == 0 {
-                        buffer = format!("{:-14} {:3} {:-15}{:6} {:4} {:3} {:3} {:4} {:4}",
-                                         KEY_STRINGS[(msg.message - WM_KEYFIRST) as usize],
-                                         msg.wParam,
-                                         key_name,
-                                         LOWORD(msg.lParam as DWORD),
-                                         HIWORD(msg.lParam as DWORD) & 0xff,
-                                         if 0x01000000 & msg.lParam != 0 { "YES" } else { "NO" },
-                                         if 0x20000000 & msg.lParam != 0 { "YES" } else { "NO" },
-                                         if 0x40000000 & msg.lParam != 0 { "DOWN" } else { "UP" },
-                                         if 0x80000000 & msg.lParam != 0 { "UP" } else { "DOWN" });
+                        buffer = format!(
+                            "{:-14} {:3} {:-15}{:6} {:4} {:3} {:3} {:4} {:4}",
+                            KEY_STRINGS[(msg.message - WM_KEYFIRST) as usize],
+                            msg.wParam,
+                            key_name,
+                            LOWORD(msg.lParam as DWORD),
+                            HIWORD(msg.lParam as DWORD) & 0xff,
+                            if 0x01000000 & msg.lParam != 0 {
+                                "YES"
+                            } else {
+                                "NO"
+                            },
+                            if 0x20000000 & msg.lParam != 0 {
+                                "YES"
+                            } else {
+                                "NO"
+                            },
+                            if 0x40000000 & msg.lParam != 0 {
+                                "DOWN"
+                            } else {
+                                "UP"
+                            },
+                            if 0x80000000 & msg.lParam != 0 {
+                                "UP"
+                            } else {
+                                "DOWN"
+                            }
+                        );
                         win_text = to_wstr(&buffer);
                     } else {
-                        buffer = format!("{:-14}           0x{:04x}   {:6} {:4} {:3} {:3} {:4} {:4}",
-                                         KEY_STRINGS[(msg.message - WM_KEYFIRST) as usize],
-                                         msg.wParam,
-                                         LOWORD(msg.lParam as DWORD),
-                                         HIWORD(msg.lParam as DWORD) & 0xff,
-                                         if 0x01000000 & msg.lParam != 0 { "YES" } else { "NO" },
-                                         if 0x20000000 & msg.lParam != 0 { "YES" } else { "NO" },
-                                         if 0x40000000 & msg.lParam != 0 { "DOWN" } else { "UP" },
-                                         if 0x80000000 & msg.lParam != 0 { "UP" } else { "DOWN" });
+                        buffer = format!(
+                            "{:-14}           0x{:04x}   {:6} {:4} {:3} {:3} {:4} {:4}",
+                            KEY_STRINGS[(msg.message - WM_KEYFIRST) as usize],
+                            msg.wParam,
+                            LOWORD(msg.lParam as DWORD),
+                            HIWORD(msg.lParam as DWORD) & 0xff,
+                            if 0x01000000 & msg.lParam != 0 {
+                                "YES"
+                            } else {
+                                "NO"
+                            },
+                            if 0x20000000 & msg.lParam != 0 {
+                                "YES"
+                            } else {
+                                "NO"
+                            },
+                            if 0x40000000 & msg.lParam != 0 {
+                                "DOWN"
+                            } else {
+                                "UP"
+                            },
+                            if 0x80000000 & msg.lParam != 0 {
+                                "UP"
+                            } else {
+                                "DOWN"
+                            }
+                        );
                         win_text = to_wstr(&buffer);
                         // Manually insert the windows key character into the
                         // windows text. Mimics the %c in wsprintf()
@@ -303,12 +404,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                     }
 
                     let y: c_int = (CLIENT_HEIGHT / CHAR_HEIGHT + 1 - i as c_int) * CHAR_HEIGHT;
-                    TextOutW(hdc,
-                             0,
-                             y,
-                             win_text.as_ptr(),
-                             lstrlenW(win_text.as_ptr()),
-                    );
+                    TextOutW(hdc, 0, y, win_text.as_ptr(), lstrlenW(win_text.as_ptr()));
                 })
             });
 
@@ -316,12 +412,12 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             DeleteFont(SelectFont(hdc, GetStockFont(SYSTEM_FONT)));
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

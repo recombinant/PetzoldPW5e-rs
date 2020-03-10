@@ -9,33 +9,32 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_DESTROY, WM_PAINT, WM_SIZE,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetStockObject, SelectObject, Polygon, SetPolyFillMode,
-                         ALTERNATE, WINDING, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
-use winapi::shared::windef::{HWND, POINT};
+use std::ptr::{null, null_mut};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HWND, POINT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{
+    GetStockObject, Polygon, SelectObject, SetPolyFillMode, ALTERNATE, WINDING,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetMessageW,
+    LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_DESTROY, WM_PAINT, WM_SIZE,
+    WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, GRAY_BRUSH, to_wstr, GetStockBrush};
-
+use extras::{to_wstr, GetStockBrush, GRAY_BRUSH, WHITE_BRUSH};
 
 fn main() {
     let app_name = to_wstr("alt_wind");
@@ -60,11 +59,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Alternate and Winding Fill Modes");
@@ -80,18 +81,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -108,21 +110,27 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     const FIGURE_POINTS: [POINT; 10] = [
-        POINT { x: 10, y: 70 }, POINT { x: 50, y: 70 }, POINT { x: 50, y: 10 },
-        POINT { x: 90, y: 10 }, POINT { x: 90, y: 50 }, POINT { x: 30, y: 50 },
-        POINT { x: 30, y: 90 }, POINT { x: 70, y: 90 }, POINT { x: 70, y: 30 },
-        POINT { x: 10, y: 30 }
+        POINT { x: 10, y: 70 },
+        POINT { x: 50, y: 70 },
+        POINT { x: 50, y: 10 },
+        POINT { x: 90, y: 10 },
+        POINT { x: 90, y: 50 },
+        POINT { x: 30, y: 50 },
+        POINT { x: 30, y: 90 },
+        POINT { x: 70, y: 90 },
+        POINT { x: 70, y: 30 },
+        POINT { x: 10, y: 30 },
     ];
     static mut CLIENT_WIDTH: c_int = 0;
     static mut CLIENT_HEIGHT: c_int = 0;
@@ -132,16 +140,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             SelectObject(hdc, GetStockObject(GRAY_BRUSH));
 
             // TODO: could use FIGURE_POINTS.len() when Rust evolves.
-            let mut poly_points: [POINT; 10] = mem::uninitialized();
+            let mut poly_points: [POINT; 10] = mem::MaybeUninit::uninit().assume_init();
 
             for (figure_point, poly_point) in FIGURE_POINTS.iter().zip(poly_points.iter_mut()) {
                 poly_point.x = CLIENT_WIDTH * figure_point.x / 200;
@@ -160,11 +168,11 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             EndPaint(hwnd, &ps);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

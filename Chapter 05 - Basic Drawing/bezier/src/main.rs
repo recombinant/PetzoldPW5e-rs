@@ -9,34 +9,31 @@
 //             (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, InvalidateRect,
-                          GetDC, ReleaseDC,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_DESTROY, WM_PAINT, WM_SIZE, WM_LBUTTONDOWN, WM_RBUTTONDOWN,
-                          WM_MOUSEMOVE, MK_RBUTTON, MK_LBUTTON,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{MoveToEx, LineTo, PolyBezier};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE};
-use winapi::shared::windef::{HWND, POINT, HDC};
+use std::ptr::{null, null_mut};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{LPARAM, LRESULT, TRUE, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HDC, HWND, POINT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{LineTo, MoveToEx, PolyBezier};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    InvalidateRect, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW,
+    ReleaseDC, ShowWindow, TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT,
+    IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, MK_LBUTTON, MK_RBUTTON, MSG, PAINTSTRUCT, SW_SHOW,
+    WM_DESTROY, WM_LBUTTONDOWN, WM_MOUSEMOVE, WM_PAINT, WM_RBUTTONDOWN, WM_SIZE, WNDCLASSEXW,
+    WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, WHITE_PEN, BLACK_PEN, to_wstr, SelectPen, GetStockPen, GetStockBrush};
-
+use extras::{to_wstr, GetStockBrush, GetStockPen, SelectPen, BLACK_PEN, WHITE_BRUSH, WHITE_PEN};
 
 fn main() {
     let app_name = to_wstr("bezier");
@@ -61,11 +58,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Bezier Splines");
@@ -81,18 +80,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -109,16 +109,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CLIENT_WIDTH: c_int = 0;
     static mut CLIENT_HEIGHT: c_int = 0;
     static mut BEZIER_POINTS: [POINT; 4] = [POINT { x: 0, y: 0 }; 4];
@@ -144,9 +144,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 POINT {
                     x: 3 * CLIENT_WIDTH / 4,
                     y: CLIENT_HEIGHT / 2,
-                }, ];
+                },
+            ];
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_LBUTTONDOWN | WM_RBUTTONDOWN | WM_MOUSEMOVE => {
             if (wparam & MK_LBUTTON) != 0 || (wparam & MK_RBUTTON) != 0 {
@@ -169,28 +170,27 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 ReleaseDC(hwnd, hdc);
             }
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_PAINT => {
             InvalidateRect(hwnd, null_mut(), TRUE);
 
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             draw_bezier(hdc, &BEZIER_POINTS);
 
             EndPaint(hwnd, &ps);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
-
 
 unsafe fn draw_bezier(hdc: HDC, points: &[POINT; 4]) {
     PolyBezier(hdc, &points[0], 4);

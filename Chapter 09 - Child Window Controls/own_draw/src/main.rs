@@ -9,42 +9,37 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
+use std::ptr::{null, null_mut};
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          MessageBoxW, LoadIconW, LoadCursorW, GetDialogBaseUnits,
-                          MoveWindow, FillRect, FrameRect, InvertRect, DrawFocusRect, GetWindowRect,
-                          MSG, WNDCLASSEXW, LPDRAWITEMSTRUCT,
-                          WM_CREATE, WM_DESTROY, WM_SIZE, WM_DRAWITEM, WM_COMMAND,
-                          WS_OVERLAPPEDWINDOW, WS_VISIBLE, WS_CHILD, SW_SHOW,
-                          CS_HREDRAW, ODS_SELECTED, ODS_FOCUS,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          BS_OWNERDRAW, };
-use winapi::um::wingdi::{Polygon, };
+use winapi::shared::minwindef::{
+    DWORD, HINSTANCE, HIWORD, LOWORD, LPARAM, LRESULT, TRUE, UINT, WPARAM,
+};
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HDC, HMENU, HWND, POINT, RECT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, DWORD, WPARAM, LPARAM, LRESULT, HIWORD, LOWORD, HINSTANCE,
-                                TRUE, };
-use winapi::shared::windef::{HWND, RECT, HMENU, POINT, HDC};
-use winapi::shared::ntdef::{LPCWSTR, };
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::Polygon;
+use winapi::um::winuser::{
+    CreateWindowExW, DefWindowProcW, DispatchMessageW, DrawFocusRect, FillRect, FrameRect,
+    GetDialogBaseUnits, GetMessageW, GetWindowRect, InvertRect, LoadCursorW, LoadIconW,
+    MessageBoxW, MoveWindow, PostQuitMessage, RegisterClassExW, ShowWindow, TranslateMessage,
+    UpdateWindow, BS_OWNERDRAW, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDI_APPLICATION,
+    LPDRAWITEMSTRUCT, MB_ICONERROR, MSG, ODS_FOCUS, ODS_SELECTED, SW_SHOW, WM_COMMAND, WM_CREATE,
+    WM_DESTROY, WM_DRAWITEM, WM_SIZE, WNDCLASSEXW, WS_CHILD, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, BLACK_BRUSH,
-             to_wstr, GetStockBrush, SelectBrush, };
-
+use extras::{to_wstr, GetStockBrush, SelectBrush, BLACK_BRUSH, WHITE_BRUSH};
 
 static mut GLOBAL_HINST: HINSTANCE = null_mut();
 const ID_SMALLER: UINT = 1;
 const ID_LARGER: UINT = 2;
-
 
 fn main() {
     let app_name = to_wstr("own_draw");
@@ -69,11 +64,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Owner-Draw Button Demo");
@@ -89,18 +86,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             GLOBAL_HINST,        // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -117,16 +115,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut HWND_SMALLER: HWND = null_mut();
     static mut HWND_LARGER: HWND = null_mut();
     static mut CLIENT_WIDTH: c_int = 0;
@@ -145,38 +143,66 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             let text = to_wstr("button");
             let blank = to_wstr("");
-            HWND_SMALLER = CreateWindowExW(0, text.as_ptr(), blank.as_ptr(),
-                                           WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
-                                           0, 0, btn_width(), btn_height(),
-                                           hwnd, ID_SMALLER as HMENU, GLOBAL_HINST, null_mut());
+            HWND_SMALLER = CreateWindowExW(
+                0,
+                text.as_ptr(),
+                blank.as_ptr(),
+                WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+                0,
+                0,
+                btn_width(),
+                btn_height(),
+                hwnd,
+                ID_SMALLER as HMENU,
+                GLOBAL_HINST,
+                null_mut(),
+            );
 
-            HWND_LARGER = CreateWindowExW(0, text.as_ptr(), blank.as_ptr(),
-                                          WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
-                                          0, 0, btn_width(), btn_height(),
-                                          hwnd, ID_LARGER as HMENU, GLOBAL_HINST, null_mut());
+            HWND_LARGER = CreateWindowExW(
+                0,
+                text.as_ptr(),
+                blank.as_ptr(),
+                WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
+                0,
+                0,
+                btn_width(),
+                btn_height(),
+                hwnd,
+                ID_LARGER as HMENU,
+                GLOBAL_HINST,
+                null_mut(),
+            );
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SIZE => {
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
-            MoveWindow(HWND_SMALLER,
-                       CLIENT_WIDTH / 2 - 3 * btn_width() / 2,
-                       CLIENT_HEIGHT / 2 - btn_height() / 2,
-                       btn_width(), btn_height(), TRUE);
+            MoveWindow(
+                HWND_SMALLER,
+                CLIENT_WIDTH / 2 - 3 * btn_width() / 2,
+                CLIENT_HEIGHT / 2 - btn_height() / 2,
+                btn_width(),
+                btn_height(),
+                TRUE,
+            );
 
-            MoveWindow(HWND_LARGER,
-                       CLIENT_WIDTH / 2 + btn_width() / 2,
-                       CLIENT_HEIGHT / 2 - btn_height() / 2,
-                       btn_width(), btn_height(), TRUE);
+            MoveWindow(
+                HWND_LARGER,
+                CLIENT_WIDTH / 2 + btn_width() / 2,
+                CLIENT_HEIGHT / 2 - btn_height() / 2,
+                btn_width(),
+                btn_height(),
+                TRUE,
+            );
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_COMMAND => {
-            let mut rc: RECT = mem::uninitialized();
+            let mut rc: RECT = mem::MaybeUninit::uninit().assume_init();
             GetWindowRect(hwnd, &mut rc);
 
             // Make the window 10% smaller or larger
@@ -199,10 +225,15 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 _ => {}
             }
 
-            MoveWindow(hwnd,
-                       rc.left, rc.top, rc.right - rc.left,
-                       rc.bottom - rc.top, TRUE);
-            0 as LRESULT  // message processed
+            MoveWindow(
+                hwnd,
+                rc.left,
+                rc.top,
+                rc.right - rc.left,
+                rc.bottom - rc.top,
+                TRUE,
+            );
+            0 as LRESULT // message processed
         }
 
         WM_DRAWITEM => {
@@ -218,7 +249,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             let cx = dis.rcItem.right - dis.rcItem.left;
             let cy = dis.rcItem.bottom - dis.rcItem.top;
 
-            let mut pt: [POINT; 3] = mem::uninitialized();
+            let mut pt: [POINT; 3] = mem::MaybeUninit::uninit().assume_init();
 
             match dis.CtlID {
                 ID_SMALLER => {
@@ -317,17 +348,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 };
                 DrawFocusRect(dis.hDC, &rc_focus);
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
-
 
 unsafe fn triangle(hdc: HDC, pt: &[POINT; 3]) {
     SelectBrush(hdc, GetStockBrush(BLACK_BRUSH));

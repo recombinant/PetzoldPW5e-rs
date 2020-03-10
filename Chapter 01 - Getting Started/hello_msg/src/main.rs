@@ -9,16 +9,14 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
 extern crate winapi;
 
-use std::ptr::null_mut;
 use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
-use winapi::um::winuser::{MB_OK, MessageBoxW};
-
+use std::ptr::null_mut;
+use winapi::um::winuser::{MessageBoxW, MB_OK};
 
 fn to_wstr(str: &str) -> Vec<u16> {
     OsStr::new(str).encode_wide().chain(once(0)).collect()

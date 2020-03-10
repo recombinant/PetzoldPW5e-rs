@@ -9,32 +9,30 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int, };
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_DESTROY, WM_PAINT, WM_SIZE,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{MoveToEx, LineTo, Rectangle, Ellipse, RoundRect};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
-use winapi::shared::windef::{HWND, };
+use std::ptr::{null, null_mut};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::HWND;
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{Ellipse, LineTo, MoveToEx, Rectangle, RoundRect};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetMessageW,
+    LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_DESTROY, WM_PAINT, WM_SIZE,
+    WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
-
+use extras::{to_wstr, GetStockBrush, WHITE_BRUSH};
 
 fn main() {
     let app_name = to_wstr("line_demo");
@@ -59,11 +57,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Line Demonstration");
@@ -79,18 +79,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -107,16 +108,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CLIENT_WIDTH: c_int = 0;
     static mut CLIENT_HEIGHT: c_int = 0;
 
@@ -125,15 +126,19 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            Rectangle(hdc,
-                      CLIENT_WIDTH / 8, CLIENT_HEIGHT / 8,
-                      7 * CLIENT_WIDTH / 8, 7 * CLIENT_HEIGHT / 8);
+            Rectangle(
+                hdc,
+                CLIENT_WIDTH / 8,
+                CLIENT_HEIGHT / 8,
+                7 * CLIENT_WIDTH / 8,
+                7 * CLIENT_HEIGHT / 8,
+            );
 
             MoveToEx(hdc, 0, 0, null_mut());
             LineTo(hdc, CLIENT_WIDTH, CLIENT_HEIGHT);
@@ -141,22 +146,31 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             MoveToEx(hdc, 0, CLIENT_HEIGHT, null_mut());
             LineTo(hdc, CLIENT_WIDTH, 0);
 
-            Ellipse(hdc,
-                    CLIENT_WIDTH / 8, CLIENT_HEIGHT / 8,
-                    7 * CLIENT_WIDTH / 8, 7 * CLIENT_HEIGHT / 8);
+            Ellipse(
+                hdc,
+                CLIENT_WIDTH / 8,
+                CLIENT_HEIGHT / 8,
+                7 * CLIENT_WIDTH / 8,
+                7 * CLIENT_HEIGHT / 8,
+            );
 
-            RoundRect(hdc,
-                      CLIENT_WIDTH / 4, CLIENT_HEIGHT / 4,
-                      3 * CLIENT_WIDTH / 4, 3 * CLIENT_HEIGHT / 4,
-                      CLIENT_WIDTH / 4, CLIENT_HEIGHT / 4);
+            RoundRect(
+                hdc,
+                CLIENT_WIDTH / 4,
+                CLIENT_HEIGHT / 4,
+                3 * CLIENT_WIDTH / 4,
+                3 * CLIENT_HEIGHT / 4,
+                CLIENT_WIDTH / 4,
+                CLIENT_HEIGHT / 4,
+            );
 
             EndPaint(hwnd, &ps);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

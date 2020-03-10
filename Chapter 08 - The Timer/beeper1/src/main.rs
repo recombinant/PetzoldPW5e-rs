@@ -9,35 +9,31 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          GetClientRect, SetTimer, MessageBeep, FillRect, InvalidateRect,
-                          KillTimer,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_CREATE, WM_DESTROY, WS_OVERLAPPEDWINDOW, WM_PAINT, WM_TIMER,
-                          SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{CreateSolidBrush, RGB, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, FALSE, };
-use winapi::shared::windef::{HWND, RECT, };
+use std::ptr::{null, null_mut};
+use winapi::shared::minwindef::{FALSE, LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HWND, RECT};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{CreateSolidBrush, RGB};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, FillRect,
+    GetClientRect, GetMessageW, InvalidateRect, KillTimer, LoadCursorW, LoadIconW, MessageBeep,
+    MessageBoxW, PostQuitMessage, RegisterClassExW, SetTimer, ShowWindow, TranslateMessage,
+    UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR,
+    MSG, PAINTSTRUCT, SW_SHOW, WM_CREATE, WM_DESTROY, WM_PAINT, WM_TIMER, WNDCLASSEXW,
+    WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, DeleteBrush};
-
+use extras::{to_wstr, DeleteBrush, GetStockBrush, WHITE_BRUSH};
 
 const ID_TIMER: usize = 1;
-
 
 fn main() {
     let app_name = to_wstr("sys_mets1");
@@ -62,38 +58,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Beeper1 Timer Demo");
         let hwnd = CreateWindowExW(
-            0,                    // dwExStyle:
-            atom as LPCWSTR,      // lpClassName: class name or atom
-            caption.as_ptr(),     // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,        // x: initial x position
-            CW_USEDEFAULT,        // y: initial y position
-            CW_USEDEFAULT,        // nWidth: initial x size
-            CW_USEDEFAULT,        // nHeight: initial y size
-            null_mut(),           // hWndParent: parent window handle
-            null_mut(),           // hMenu: window menu handle
-            hinstance,            // hInstance: program instance handle
-            null_mut());          // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -110,48 +109,52 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut FLIP_FLOP: bool = false;
 
     match message {
         WM_CREATE => {
             SetTimer(hwnd, ID_TIMER, 1000, None);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_TIMER => {
             MessageBeep(0xFFFFFFFF);
             FLIP_FLOP = !FLIP_FLOP;
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            let mut rc: RECT = mem::uninitialized();
+            let mut rc: RECT = mem::MaybeUninit::uninit().assume_init();
             GetClientRect(hwnd, &mut rc);
-            let hbrush = CreateSolidBrush(if FLIP_FLOP { RGB(255, 0, 0) } else { RGB(0, 0, 255) });
+            let hbrush = CreateSolidBrush(if FLIP_FLOP {
+                RGB(255, 0, 0)
+            } else {
+                RGB(0, 0, 255)
+            });
             FillRect(hdc, &rc, hbrush);
             DeleteBrush(hbrush);
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

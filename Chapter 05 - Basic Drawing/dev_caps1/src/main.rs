@@ -9,38 +9,35 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int};
+use std::ptr::{null, null_mut};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::HWND;
 use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_CREATE, WM_DESTROY, WM_PAINT,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign, GetDeviceCaps,
-                         TEXTMETRICW,
-                         TA_LEFT, TA_RIGHT, TA_TOP,
-                         HORZSIZE, VERTSIZE, HORZRES, VERTRES, BITSPIXEL, PLANES, NUMBRUSHES,
-                         NUMPENS, NUMMARKERS, NUMFONTS, NUMCOLORS, PDEVICESIZE, ASPECTX, ASPECTY,
-                         ASPECTXY, LOGPIXELSX, LOGPIXELSY, SIZEPALETTE, NUMRESERVED, COLORRES, };
-use winapi::um::winbase::{lstrlenW};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
-use winapi::shared::windef::{HWND};
-use winapi::shared::ntdef::{LPCWSTR};
+use winapi::um::winbase::lstrlenW;
+use winapi::um::wingdi::{
+    GetDeviceCaps, GetTextMetricsW, SetTextAlign, TextOutW, ASPECTX, ASPECTXY, ASPECTY, BITSPIXEL,
+    COLORRES, HORZRES, HORZSIZE, LOGPIXELSX, LOGPIXELSY, NUMBRUSHES, NUMCOLORS, NUMFONTS,
+    NUMMARKERS, NUMPENS, NUMRESERVED, PDEVICESIZE, PLANES, SIZEPALETTE, TA_LEFT, TA_RIGHT, TA_TOP,
+    TEXTMETRICW, VERTRES, VERTSIZE,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW, ReleaseDC, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_CREATE, WM_DESTROY, WM_PAINT,
+    WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
-
+use extras::{to_wstr, GetStockBrush, WHITE_BRUSH};
 
 struct DevCaps<'a> {
     index: c_int,
@@ -50,29 +47,108 @@ struct DevCaps<'a> {
 
 //@formatter:off
 const DEV_CAPS: &'static [DevCaps] = &[
-    DevCaps { index: HORZSIZE,    label: "HORZSIZE",    desc: "Width in millimeters:" },
-    DevCaps { index: VERTSIZE,    label: "VERTSIZE",    desc: "Height in millimeters:" },
-    DevCaps { index: HORZRES,     label: "HORZRES",     desc: "Width in pixels:" },
-    DevCaps { index: VERTRES,     label: "VERTRES",     desc: "Height in raster lines:" },
-    DevCaps { index: BITSPIXEL,   label: "BITSPIXEL",   desc: "Color bits per pixel:" },
-    DevCaps { index: PLANES,      label: "PLANES",      desc: "Number of color planes:" },
-    DevCaps { index: NUMBRUSHES,  label: "NUMBRUSHES",  desc: "Number of device brushes:" },
-    DevCaps { index: NUMPENS,     label: "NUMPENS",     desc: "Number of device pens:" },
-    DevCaps { index: NUMMARKERS,  label: "NUMMARKERS",  desc: "Number of device markers:" },
-    DevCaps { index: NUMFONTS,    label: "NUMFONTS",    desc: "Number of device fonts:" },
-    DevCaps { index: NUMCOLORS,   label: "NUMCOLORS",   desc: "Number of device colors:" },
-    DevCaps { index: PDEVICESIZE, label: "PDEVICESIZE", desc: "Size of device structure:" },
-    DevCaps { index: ASPECTX,     label: "ASPECTX",     desc: "Relative width of pixel:" },
-    DevCaps { index: ASPECTY,     label: "ASPECTY",     desc: "Relative height of pixel:" },
-    DevCaps { index: ASPECTXY,    label: "ASPECTXY",    desc: "Relative diagonal of pixel:" },
-    DevCaps { index: LOGPIXELSX,  label: "LOGPIXELSX",  desc: "Horizontal dots per inch:" },
-    DevCaps { index: LOGPIXELSY,  label: "LOGPIXELSY",  desc: "Vertical dots per inch:" },
-    DevCaps { index: SIZEPALETTE, label: "SIZEPALETTE", desc: "Number of palette entries:" },
-    DevCaps { index: NUMRESERVED, label: "NUMRESERVED", desc: "Reserved palette entries:" },
-    DevCaps { index: COLORRES,    label: "COLORRES",    desc: "Actual color resolution:" },
+    DevCaps {
+        index: HORZSIZE,
+        label: "HORZSIZE",
+        desc: "Width in millimeters:",
+    },
+    DevCaps {
+        index: VERTSIZE,
+        label: "VERTSIZE",
+        desc: "Height in millimeters:",
+    },
+    DevCaps {
+        index: HORZRES,
+        label: "HORZRES",
+        desc: "Width in pixels:",
+    },
+    DevCaps {
+        index: VERTRES,
+        label: "VERTRES",
+        desc: "Height in raster lines:",
+    },
+    DevCaps {
+        index: BITSPIXEL,
+        label: "BITSPIXEL",
+        desc: "Color bits per pixel:",
+    },
+    DevCaps {
+        index: PLANES,
+        label: "PLANES",
+        desc: "Number of color planes:",
+    },
+    DevCaps {
+        index: NUMBRUSHES,
+        label: "NUMBRUSHES",
+        desc: "Number of device brushes:",
+    },
+    DevCaps {
+        index: NUMPENS,
+        label: "NUMPENS",
+        desc: "Number of device pens:",
+    },
+    DevCaps {
+        index: NUMMARKERS,
+        label: "NUMMARKERS",
+        desc: "Number of device markers:",
+    },
+    DevCaps {
+        index: NUMFONTS,
+        label: "NUMFONTS",
+        desc: "Number of device fonts:",
+    },
+    DevCaps {
+        index: NUMCOLORS,
+        label: "NUMCOLORS",
+        desc: "Number of device colors:",
+    },
+    DevCaps {
+        index: PDEVICESIZE,
+        label: "PDEVICESIZE",
+        desc: "Size of device structure:",
+    },
+    DevCaps {
+        index: ASPECTX,
+        label: "ASPECTX",
+        desc: "Relative width of pixel:",
+    },
+    DevCaps {
+        index: ASPECTY,
+        label: "ASPECTY",
+        desc: "Relative height of pixel:",
+    },
+    DevCaps {
+        index: ASPECTXY,
+        label: "ASPECTXY",
+        desc: "Relative diagonal of pixel:",
+    },
+    DevCaps {
+        index: LOGPIXELSX,
+        label: "LOGPIXELSX",
+        desc: "Horizontal dots per inch:",
+    },
+    DevCaps {
+        index: LOGPIXELSY,
+        label: "LOGPIXELSY",
+        desc: "Vertical dots per inch:",
+    },
+    DevCaps {
+        index: SIZEPALETTE,
+        label: "SIZEPALETTE",
+        desc: "Number of palette entries:",
+    },
+    DevCaps {
+        index: NUMRESERVED,
+        label: "NUMRESERVED",
+        desc: "Reserved palette entries:",
+    },
+    DevCaps {
+        index: COLORRES,
+        label: "COLORRES",
+        desc: "Actual color resolution:",
+    },
 ];
 //@formatter:on
-
 
 fn main() {
     let app_name = to_wstr("dev_caps1");
@@ -97,11 +173,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Device Capabilities No. 1");
@@ -117,18 +195,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -145,16 +224,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CAPS_WIDTH: c_int = 0;
     static mut CHAR_WIDTH: c_int = 0;
     static mut CHAR_HEIGHT: c_int = 0;
@@ -162,7 +241,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
     match message {
         WM_CREATE => {
             let hdc = GetDC(hwnd);
-            let mut tm: TEXTMETRICW = mem::uninitialized();
+            let mut tm: TEXTMETRICW = mem::MaybeUninit::uninit().assume_init();
 
             GetTextMetricsW(hdc, &mut tm);
             CHAR_WIDTH = tm.tmAveCharWidth;
@@ -171,10 +250,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             ReleaseDC(hwnd, hdc);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             for (u, dev_cap) in DEV_CAPS.iter().enumerate() {
@@ -183,35 +262,41 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 SetTextAlign(hdc, TA_LEFT | TA_TOP);
 
                 let label = to_wstr(dev_cap.label);
-                TextOutW(hdc,
-                         0,
-                         CHAR_HEIGHT * i,
-                         label.as_ptr(),
-                         lstrlenW(label.as_ptr()));
+                TextOutW(
+                    hdc,
+                    0,
+                    CHAR_HEIGHT * i,
+                    label.as_ptr(),
+                    lstrlenW(label.as_ptr()),
+                );
 
                 let desc = to_wstr(dev_cap.desc);
-                TextOutW(hdc,
-                         14 * CAPS_WIDTH,
-                         CHAR_HEIGHT * i,
-                         desc.as_ptr(),
-                         lstrlenW(desc.as_ptr()));
+                TextOutW(
+                    hdc,
+                    14 * CAPS_WIDTH,
+                    CHAR_HEIGHT * i,
+                    desc.as_ptr(),
+                    lstrlenW(desc.as_ptr()),
+                );
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
                 let cap = to_wstr(&format!("{:5}", GetDeviceCaps(hdc, dev_cap.index)));
-                TextOutW(hdc,
-                         14 * CAPS_WIDTH + 35 * CHAR_WIDTH,
-                         CHAR_HEIGHT * i,
-                         cap.as_ptr(),
-                         lstrlenW(cap.as_ptr()));
+                TextOutW(
+                    hdc,
+                    14 * CAPS_WIDTH + 35 * CHAR_WIDTH,
+                    CHAR_HEIGHT * i,
+                    cap.as_ptr(),
+                    lstrlenW(cap.as_ptr()),
+                );
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

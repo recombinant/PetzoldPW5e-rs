@@ -9,30 +9,28 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          InvalidateRect, SetCursor, GetDC, ReleaseDC, SetCapture, ReleaseCapture,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW, WM_DESTROY, WM_PAINT,
-                          WM_MOUSEMOVE, WM_LBUTTONUP, WM_CHAR,
-                          WM_LBUTTONDOWN, WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW, CS_VREDRAW,
-                          IDC_ARROW, IDC_CROSS, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{Rectangle, SetROP2, R2_NOT, };
+use std::ptr::{null, null_mut};
+use winapi::shared::minwindef::{LPARAM, LRESULT, TRUE, UINT, WPARAM};
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HDC, HWND, POINT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE};
-use winapi::shared::windef::{HWND, POINT, HDC };
-use winapi::shared::ntdef::{LPCWSTR, };
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{Rectangle, SetROP2, R2_NOT};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    InvalidateRect, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW,
+    ReleaseCapture, ReleaseDC, SetCapture, SetCursor, ShowWindow, TranslateMessage, UpdateWindow,
+    CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDC_CROSS, IDI_APPLICATION, MB_ICONERROR,
+    MSG, PAINTSTRUCT, SW_SHOW, WM_CHAR, WM_DESTROY, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE,
+    WM_PAINT, WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
-use extras::{WHITE_BRUSH, BLACK_BRUSH, NULL_BRUSH, to_wstr, GetStockBrush, SelectBrush, };
-
+use extras::{to_wstr, GetStockBrush, SelectBrush, BLACK_BRUSH, NULL_BRUSH, WHITE_BRUSH};
 
 fn main() {
     let app_name = to_wstr("blokout2");
@@ -57,38 +55,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Mouse Button & Capture Demo");
         let hwnd = CreateWindowExW(
-            0,                 // dwExStyle:
-            atom as LPCWSTR,   // lpClassName: class name or atom
-            caption.as_ptr(),  // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,     // x: initial x position
-            CW_USEDEFAULT,     // y: initial y position
-            CW_USEDEFAULT,     // nWidth: initial x size
-            CW_USEDEFAULT,     // nHeight: initial y size
-            null_mut(),        // hWndParent: parent window handle
-            null_mut(),        // hMenu: window menu handle
-            hinstance,         // hInstance: program instance handle
-            null_mut());       // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -105,16 +106,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut BLOCKING: bool = false;
     static mut VALID_BOX: bool = false;
     static mut BEGIN_POINT: POINT = POINT { x: 0, y: 0 };
@@ -136,7 +137,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             BLOCKING = true;
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_MOUSEMOVE => {
@@ -150,7 +151,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 draw_box_outline(hwnd, BEGIN_POINT, END_POINT);
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_LBUTTONUP => {
@@ -169,12 +170,13 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 InvalidateRect(hwnd, null(), TRUE);
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_CHAR => {
             let ch = std::char::from_u32(wparam as u32).unwrap();
-            if BLOCKING && (ch == '\u{1b}') {    // i.e., Escape
+            if BLOCKING && (ch == '\u{1b}') {
+                // i.e., Escape
 
                 draw_box_outline(hwnd, BEGIN_POINT, END_POINT);
 
@@ -183,17 +185,22 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
                 BLOCKING = false;
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             if VALID_BOX {
                 SelectBrush(hdc, GetStockBrush(BLACK_BRUSH));
-                Rectangle(hdc, BOX_BEGIN_POINT.x, BOX_BEGIN_POINT.y,
-                          BOX_END_POINT.x, BOX_END_POINT.y);
+                Rectangle(
+                    hdc,
+                    BOX_BEGIN_POINT.x,
+                    BOX_BEGIN_POINT.y,
+                    BOX_END_POINT.x,
+                    BOX_END_POINT.y,
+                );
             }
 
             if BLOCKING {
@@ -203,17 +210,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
-
 
 unsafe fn draw_box_outline(hwnd: HWND, begin_point: POINT, end_point: POINT) {
     let hdc: HDC = GetDC(hwnd);

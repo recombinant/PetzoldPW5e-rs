@@ -8,43 +8,41 @@
 // CLOCK.C −− Analog Clock Program
 //            (c) Charles Petzold, 1998
 //
-#![feature(iterator_step_by)]
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
-use std::mem;
 use std::f64::consts::PI;
-use std::ptr::{null_mut, null};
+use std::mem;
+use std::ptr::{null, null_mut};
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          SetTimer, KillTimer, GetDC, ReleaseDC,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_CREATE, WM_DESTROY, WM_TIMER, WM_SIZE,
-                          WS_OVERLAPPEDWINDOW, WM_PAINT, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{SetMapMode, SetWindowExtEx, SetViewportExtEx,
-                         SetViewportOrgEx, Ellipse, Polyline, };
-use winapi::um::minwinbase::{SYSTEMTIME, };
-use winapi::um::sysinfoapi::{ GetLocalTime, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
-use winapi::shared::windef::{HWND, POINT, HDC, };
-use winapi::shared::ntdef::{LPCWSTR, LONG, };
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::ntdef::{LONG, LPCWSTR};
+use winapi::shared::windef::{HDC, HWND, POINT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::minwinbase::SYSTEMTIME;
+use winapi::um::sysinfoapi::GetLocalTime;
+use winapi::um::wingdi::{
+    Ellipse, Polyline, SetMapMode, SetViewportExtEx, SetViewportOrgEx, SetWindowExtEx,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    KillTimer, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW, ReleaseDC,
+    SetTimer, ShowWindow, TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT,
+    IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_CREATE, WM_DESTROY,
+    WM_PAINT, WM_SIZE, WM_TIMER, WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, BLACK_BRUSH, WHITE_PEN, BLACK_PEN, MM_ISOTROPIC,
-             to_wstr, GetStockPen, GetStockBrush, SelectPen, SelectBrush};
-
+use extras::{
+    to_wstr, GetStockBrush, GetStockPen, SelectBrush, SelectPen, BLACK_BRUSH, BLACK_PEN,
+    MM_ISOTROPIC, WHITE_BRUSH, WHITE_PEN,
+};
 
 const ID_TIMER: usize = 1;
-
 
 fn main() {
     let app_name = to_wstr("clock");
@@ -69,38 +67,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Analog Clock");
         let hwnd = CreateWindowExW(
-            0,                    // dwExStyle:
-            atom as LPCWSTR,      // lpClassName: class name or atom
-            caption.as_ptr(),     // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,        // x: initial x position
-            CW_USEDEFAULT,        // y: initial y position
-            CW_USEDEFAULT,        // nWidth: initial x size
-            CW_USEDEFAULT,        // nHeight: initial y size
-            null_mut(),           // hWndParent: parent window handle
-            null_mut(),           // hMenu: window menu handle
-            hinstance,            // hInstance: program instance handle
-            null_mut());          // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -117,19 +118,19 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CLIENT_WIDTH: c_int = 0;
     static mut CLIENT_HEIGHT: c_int = 0;
-    static mut ST_PREVIOUS: SYSTEMTIME = SYSTEMTIME{
+    static mut ST_PREVIOUS: SYSTEMTIME = SYSTEMTIME {
         wYear: 0,
         wMonth: 0,
         wDayOfWeek: 0,
@@ -144,25 +145,23 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         WM_CREATE => {
             SetTimer(hwnd, ID_TIMER, 1000, None);
 
-            let mut st: SYSTEMTIME = mem::uninitialized();
+            let mut st: SYSTEMTIME = mem::MaybeUninit::uninit().assume_init();
             GetLocalTime(&mut st);
             ST_PREVIOUS = st;
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SIZE => {
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_TIMER => {
-            let mut st: SYSTEMTIME = mem::uninitialized();
+            let mut st: SYSTEMTIME = mem::MaybeUninit::uninit().assume_init();
             GetLocalTime(&mut st);
 
-            let changed =
-                st.wHour != ST_PREVIOUS.wHour ||
-                    st.wMinute != ST_PREVIOUS.wMinute;
+            let changed = st.wHour != ST_PREVIOUS.wHour || st.wMinute != ST_PREVIOUS.wMinute;
 
             let hdc: HDC = GetDC(hwnd);
 
@@ -177,11 +176,11 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             ReleaseDC(hwnd, hdc);
 
             ST_PREVIOUS = st;
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             set_isotropic(hdc, CLIENT_WIDTH, CLIENT_HEIGHT);
@@ -189,19 +188,18 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             draw_hands(hdc, &ST_PREVIOUS, true);
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
-
 
 unsafe fn set_isotropic(hdc: HDC, client_width: c_int, client_height: c_int) {
     SetMapMode(hdc, MM_ISOTROPIC);
@@ -210,9 +208,8 @@ unsafe fn set_isotropic(hdc: HDC, client_width: c_int, client_height: c_int) {
     SetViewportOrgEx(hdc, client_width / 2, client_height / 2, null_mut());
 }
 
-
 unsafe fn draw_clock(hdc: HDC) {
-    let mut pt: [POINT; 3] = mem::uninitialized();
+    let mut pt: [POINT; 3] = mem::MaybeUninit::uninit().assume_init();
 
     for angle in (0..360).step_by(6) {
         pt[0].x = 0;
@@ -239,12 +236,28 @@ unsafe fn draw_clock(hdc: HDC) {
 unsafe fn draw_hands(hdc: HDC, pst: &SYSTEMTIME, change: bool) {
     //@formatter:off
     const PT: [[POINT; 5]; 3] = [
-        [POINT { x:    0, y: -150 }, POINT { x: 100, y:    0 }, POINT { x: 0, y: 600 },
-         POINT { x: -100, y:    0 }, POINT { x:   0, y: -150 }],
-        [POINT { x:    0, y: -200 }, POINT { x:  50, y:    0 }, POINT { x: 0, y: 800 },
-         POINT { x:  -50, y:    0 }, POINT { x:   0, y: -200 }],
-        [POINT { x:    0, y:    0 }, POINT { x:   0, y:    0 }, POINT { x: 0, y:   0 },
-         POINT { x:    0, y:    0 }, POINT { x:   0, y:  800 }]];
+        [
+            POINT { x: 0, y: -150 },
+            POINT { x: 100, y: 0 },
+            POINT { x: 0, y: 600 },
+            POINT { x: -100, y: 0 },
+            POINT { x: 0, y: -150 },
+        ],
+        [
+            POINT { x: 0, y: -200 },
+            POINT { x: 50, y: 0 },
+            POINT { x: 0, y: 800 },
+            POINT { x: -50, y: 0 },
+            POINT { x: 0, y: -200 },
+        ],
+        [
+            POINT { x: 0, y: 0 },
+            POINT { x: 0, y: 0 },
+            POINT { x: 0, y: 0 },
+            POINT { x: 0, y: 0 },
+            POINT { x: 0, y: 800 },
+        ],
+    ];
     //@formatter:on
 
     let angle: [c_int; 3] = [
@@ -260,7 +273,6 @@ unsafe fn draw_hands(hdc: HDC, pst: &SYSTEMTIME, change: bool) {
         Polyline(hdc, &temp_pt[i][0], 5);
     }
 }
-
 
 unsafe fn rotate_point(pt_array: &mut [POINT], angle: f64) {
     let c = (2.0 * PI * angle / 360.0).cos();

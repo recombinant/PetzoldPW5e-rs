@@ -9,40 +9,33 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-// 1.23 inadequate, requires nightly build
-#![feature(const_ptr_null_mut)]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
-use winapi::ctypes::{c_int, c_long, };
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          MoveWindow, GetClientRect,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW,
-                          InvalidateRect, MessageBeep,
-                          GetWindowLongPtrW, SetWindowLongPtrW,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW, WM_DESTROY, WM_PAINT, WM_SIZE,
-                          WM_CREATE, WM_LBUTTONDOWN,
-                          WS_OVERLAPPEDWINDOW, WS_CHILDWINDOW, WS_VISIBLE,
-                          SW_SHOW, CS_HREDRAW, CS_VREDRAW,
-                          IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{Rectangle, MoveToEx, LineTo, };
+use std::ptr::{null, null_mut};
+use winapi::ctypes::{c_int, c_long};
+use winapi::shared::minwindef::{FALSE, LPARAM, LRESULT, TRUE, UINT, WPARAM};
+use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HMENU, HWND, RECT};
 use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE, };
-use winapi::shared::windef::{HWND, RECT, HMENU, };
-use winapi::shared::ntdef::{LPCWSTR, };
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{LineTo, MoveToEx, Rectangle};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect,
+    GetMessageW, GetWindowLongPtrW, InvalidateRect, LoadCursorW, LoadIconW, MessageBeep,
+    MessageBoxW, MoveWindow, PostQuitMessage, RegisterClassExW, SetWindowLongPtrW, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_CREATE, WM_DESTROY,
+    WM_LBUTTONDOWN, WM_PAINT, WM_SIZE, WNDCLASSEXW, WS_CHILDWINDOW, WS_OVERLAPPEDWINDOW,
+    WS_VISIBLE,
+};
 
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush, GetWindowInstance, GWLP_USERDATA, };
-
+use extras::{to_wstr, GetStockBrush, GetWindowInstance, GWLP_USERDATA, WHITE_BRUSH};
 
 const DIVISIONS: usize = 5;
 static CHILD_CLASS_NAME: &'static str = "checker3_child";
-
 
 fn main() {
     let app_name = to_wstr("checker3");
@@ -68,18 +61,20 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         wndclassex = WNDCLASSEXW {
-            lpfnWndProc : Some(child_wnd_proc),
-            cbWndExtra : mem::size_of::<c_long>() as c_int,
-            hIcon : null_mut(),
-            lpszClassName : child_class_name.as_ptr(),
+            lpfnWndProc: Some(child_wnd_proc),
+            cbWndExtra: mem::size_of::<c_long>() as c_int,
+            hIcon: null_mut(),
+            lpszClassName: child_class_name.as_ptr(),
             ..wndclassex
         };
 
@@ -87,29 +82,30 @@ fn main() {
 
         let caption = to_wstr("Checker3 Mouse Hit-Test Demo");
         let hwnd = CreateWindowExW(
-            0,                 // dwExStyle:
-            atom as LPCWSTR,   // lpClassName: class name or atom
-            caption.as_ptr(),  // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,     // x: initial x position
-            CW_USEDEFAULT,     // y: initial y position
-            CW_USEDEFAULT,     // nWidth: initial x size
-            CW_USEDEFAULT,     // nHeight: initial y size
-            null_mut(),        // hWndParent: parent window handle
-            null_mut(),        // hMenu: window menu handle
-            hinstance,         // hInstance: program instance handle
-            null_mut());       // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -126,15 +122,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut HWND_CHILD: [[HWND; DIVISIONS]; DIVISIONS] = [[null_mut(); DIVISIONS]; DIVISIONS];
 
     match message {
@@ -147,13 +144,18 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                         child_class_name.as_ptr(),
                         null(),
                         WS_CHILDWINDOW | WS_VISIBLE,
-                        0, 0, 0, 0,
-                        hwnd, (y << 8 | x) as HMENU,
+                        0,
+                        0,
+                        0,
+                        0,
+                        hwnd,
+                        (y << 8 | x) as HMENU,
                         GetWindowInstance(hwnd),
-                        null_mut());
+                        null_mut(),
+                    );
                 }
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SIZE => {
@@ -162,50 +164,59 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             for x in 0..DIVISIONS {
                 for y in 0..DIVISIONS {
-                    MoveWindow(HWND_CHILD[x][y],
-                               x as c_int * block_x, y as c_int * block_y,
-                               block_x, block_y, TRUE);
+                    MoveWindow(
+                        HWND_CHILD[x][y],
+                        x as c_int * block_x,
+                        y as c_int * block_y,
+                        block_x,
+                        block_y,
+                        TRUE,
+                    );
                 }
             }
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_LBUTTONDOWN => {
             MessageBeep(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
 
-
-unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
-                                         message: UINT,
-                                         wparam: WPARAM,
-                                         lparam: LPARAM)
-                                         -> LRESULT {
+unsafe extern "system" fn child_wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     match message {
         WM_CREATE => {
-            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0);       // on/off flag
-            0 as LRESULT  // message processed
+            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0); // on/off flag
+            0 as LRESULT // message processed
         }
 
         WM_LBUTTONDOWN => {
-            SetWindowLongPtrW(hwnd, GWLP_USERDATA, 1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+            SetWindowLongPtrW(
+                hwnd,
+                GWLP_USERDATA,
+                1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA),
+            );
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
-            let mut rect: RECT = mem::uninitialized();
+            let mut rect: RECT = mem::MaybeUninit::uninit().assume_init();
             GetClientRect(hwnd, &mut rect);
             Rectangle(hdc, 0, 0, rect.right, rect.bottom);
 
@@ -217,7 +228,7 @@ unsafe extern "system" fn child_wnd_proc(hwnd: HWND,
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

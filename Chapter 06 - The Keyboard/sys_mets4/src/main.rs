@@ -9,47 +9,43 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
-extern crate sys_mets_data;
 extern crate extras;
+extern crate sys_mets_data;
+extern crate winapi;
 
-use sys_mets_data::SYS_METRICS;
-use std::mem;
 use std::cmp;
-use std::ptr::{null_mut, null};
+use std::mem;
+use std::ptr::{null, null_mut};
+use sys_mets_data::SYS_METRICS;
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetSystemMetrics, SetScrollInfo, GetScrollInfo, ScrollWindowEx,
-                          SendMessageW,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW, SCROLLINFO,
-                          WM_CREATE, WM_DESTROY, WM_PAINT, WM_SIZE, WM_VSCROLL, WM_HSCROLL,
-                          WM_KEYDOWN, VK_HOME, VK_END, VK_NEXT, VK_PRIOR, VK_UP, VK_DOWN, VK_LEFT,
-                          VK_RIGHT,
-                          WS_OVERLAPPEDWINDOW, WS_VSCROLL, WS_HSCROLL, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          SB_TOP, SB_BOTTOM, SB_LINEUP, SB_LINEDOWN, SB_LINELEFT,
-                          SB_LINERIGHT, SB_PAGEUP, SB_PAGEDOWN, SB_PAGELEFT, SB_PAGERIGHT,
-                          SB_THUMBPOSITION, SIF_ALL, SIF_RANGE, SIF_PAGE, SIF_POS,
-                          SW_INVALIDATE, SW_ERASE, };
-use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetTextAlign,
-                         TEXTMETRICW,
-                         TA_LEFT, TA_RIGHT, TA_TOP, };
-use winapi::um::winbase::lstrlenW;
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE};
-use winapi::shared::windef::{HWND, };
+use winapi::shared::minwindef::{LPARAM, LRESULT, TRUE, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::HWND;
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::winbase::lstrlenW;
+use winapi::um::wingdi::{
+    GetTextMetricsW, SetTextAlign, TextOutW, TA_LEFT, TA_RIGHT, TA_TOP, TEXTMETRICW,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    GetScrollInfo, GetSystemMetrics, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage,
+    RegisterClassExW, ReleaseDC, ScrollWindowEx, SendMessageW, SetScrollInfo, ShowWindow,
+    TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SB_BOTTOM, SB_LINEDOWN, SB_LINELEFT,
+    SB_LINERIGHT, SB_LINEUP, SB_PAGEDOWN, SB_PAGELEFT, SB_PAGERIGHT, SB_PAGEUP, SB_THUMBPOSITION,
+    SB_TOP, SCROLLINFO, SIF_ALL, SIF_PAGE, SIF_POS, SIF_RANGE, SW_ERASE, SW_INVALIDATE, SW_SHOW,
+    VK_DOWN, VK_END, VK_HOME, VK_LEFT, VK_NEXT, VK_PRIOR, VK_RIGHT, VK_UP, WM_CREATE, WM_DESTROY,
+    WM_HSCROLL, WM_KEYDOWN, WM_PAINT, WM_SIZE, WM_VSCROLL, WNDCLASSEXW, WS_HSCROLL,
+    WS_OVERLAPPEDWINDOW, WS_VSCROLL,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, SB_VERT, SB_HORZ, to_wstr, GetStockBrush,
-             GET_WM_HSCROLL_CODE, GET_WM_VSCROLL_CODE};
-
+use extras::{
+    to_wstr, GetStockBrush, GET_WM_HSCROLL_CODE, GET_WM_VSCROLL_CODE, SB_HORZ, SB_VERT, WHITE_BRUSH,
+};
 
 fn main() {
     let app_name = to_wstr("sys_mets4");
@@ -74,38 +70,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Get System Metrics No. 4");
         let hwnd = CreateWindowExW(
-            0,                 // dwExStyle:
-            atom as LPCWSTR,   // lpClassName: class name or atom
-            caption.as_ptr(),  // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL,  // dwStyle: window style
-            CW_USEDEFAULT,     // x: initial x position
-            CW_USEDEFAULT,     // y: initial y position
-            CW_USEDEFAULT,     // nWidth: initial x size
-            CW_USEDEFAULT,     // nHeight: initial y size
-            null_mut(),        // hWndParent: parent window handle
-            null_mut(),        // hMenu: window menu handle
-            hinstance,         // hInstance: program instance handle
-            null_mut());       // lpParam: creation parameters
+            0,                                             // dwExStyle:
+            atom as LPCWSTR,                               // lpClassName: class name or atom
+            caption.as_ptr(),                              // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW | WS_VSCROLL | WS_HSCROLL, // dwStyle: window style
+            CW_USEDEFAULT,                                 // x: initial x position
+            CW_USEDEFAULT,                                 // y: initial y position
+            CW_USEDEFAULT,                                 // nWidth: initial x size
+            CW_USEDEFAULT,                                 // nHeight: initial y size
+            null_mut(),                                    // hWndParent: parent window handle
+            null_mut(),                                    // hMenu: window menu handle
+            hinstance,                                     // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -122,15 +121,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CAPS_WIDTH: c_int = 0;
     static mut CHAR_WIDTH: c_int = 0;
     static mut CHAR_HEIGHT: c_int = 0;
@@ -141,7 +141,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
     match message {
         WM_CREATE => {
             let hdc = GetDC(hwnd);
-            let mut tm: TEXTMETRICW = mem::uninitialized();
+            let mut tm: TEXTMETRICW = mem::MaybeUninit::uninit().assume_init();
 
             GetTextMetricsW(hdc, &mut tm);
             CHAR_WIDTH = tm.tmAveCharWidth;
@@ -154,7 +154,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             MAX_COLUMN_WIDTH = 40 * CHAR_WIDTH + 22 * CAPS_WIDTH;
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SIZE => {
@@ -184,17 +184,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             };
             SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_VSCROLL => {
-
             // Get all the vertical scroll bar information
 
             let mut si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_ALL,
-                ..mem::uninitialized()
+                ..mem::MaybeUninit::uninit().assume_init()
             };
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
@@ -204,16 +203,28 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) as LPARAM {
                 //@formatter:off
-                SB_TOP      => { si.nPos = si.nMin; }
-                SB_BOTTOM   => { si.nPos = si.nMax; }
-                SB_LINEUP   => { si.nPos -= 1; }
-                SB_LINEDOWN => { si.nPos += 1; }
-                SB_PAGEUP   => { si.nPos -= si.nPage as c_int; }
-                SB_PAGEDOWN => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION
-                            => { si.nPos = si.nTrackPos; }
-                _           => {}
-                //@formatter:on
+                SB_TOP => {
+                    si.nPos = si.nMin;
+                }
+                SB_BOTTOM => {
+                    si.nPos = si.nMax;
+                }
+                SB_LINEUP => {
+                    si.nPos -= 1;
+                }
+                SB_LINEDOWN => {
+                    si.nPos += 1;
+                }
+                SB_PAGEUP => {
+                    si.nPos -= si.nPage as c_int;
+                }
+                SB_PAGEDOWN => {
+                    si.nPos += si.nPage as c_int;
+                }
+                SB_THUMBPOSITION => {
+                    si.nPos = si.nTrackPos;
+                }
+                _ => {} //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -227,22 +238,28 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             if si.nPos != vert_pos {
                 // ScrollWindow(hwnd, 0, CHAR_HEIGHT * (vert_pos - si.nPos), null(), null());
-                ScrollWindowEx(hwnd,
-                               0, CHAR_HEIGHT * (vert_pos - si.nPos),
-                               null(), null(), null_mut(), null_mut(), SW_INVALIDATE | SW_ERASE);
+                ScrollWindowEx(
+                    hwnd,
+                    0,
+                    CHAR_HEIGHT * (vert_pos - si.nPos),
+                    null(),
+                    null(),
+                    null_mut(),
+                    null_mut(),
+                    SW_INVALIDATE | SW_ERASE,
+                );
             }
 
             0 as LRESULT
         }
 
         WM_HSCROLL => {
-
             // Get all the horizontal scroll bar information
 
             let mut si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_ALL,
-                ..mem::uninitialized()
+                ..mem::MaybeUninit::uninit().assume_init()
             };
             GetScrollInfo(hwnd, SB_HORZ, &mut si);
 
@@ -252,14 +269,22 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             match GET_WM_HSCROLL_CODE(wparam, lparam) as LPARAM {
                 //@formatter:off
-                SB_LINELEFT  => { si.nPos -= 1; }
-                SB_LINERIGHT => { si.nPos += 1; }
-                SB_PAGELEFT  => { si.nPos -= si.nPage as c_int; }
-                SB_PAGERIGHT => { si.nPos += si.nPage as c_int; }
-                SB_THUMBPOSITION
-                             => { si.nPos = si.nTrackPos; }
-                _            => {}
-                //@formatter:on
+                SB_LINELEFT => {
+                    si.nPos -= 1;
+                }
+                SB_LINERIGHT => {
+                    si.nPos += 1;
+                }
+                SB_PAGELEFT => {
+                    si.nPos -= si.nPage as c_int;
+                }
+                SB_PAGERIGHT => {
+                    si.nPos += si.nPage as c_int;
+                }
+                SB_THUMBPOSITION => {
+                    si.nPos = si.nTrackPos;
+                }
+                _ => {} //@formatter:on
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -273,9 +298,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             if si.nPos != horz_pos {
                 // ScrollWindow(hwnd, CHAR_WIDTH * (horz_pos - si.nPos), 0, null(), null());
-                ScrollWindowEx(hwnd,
-                               CHAR_WIDTH * (horz_pos - si.nPos), 0,
-                               null(), null(), null_mut(), null_mut(), SW_INVALIDATE | SW_ERASE);
+                ScrollWindowEx(
+                    hwnd,
+                    CHAR_WIDTH * (horz_pos - si.nPos),
+                    0,
+                    null(),
+                    null(),
+                    null_mut(),
+                    null_mut(),
+                    SW_INVALIDATE | SW_ERASE,
+                );
             }
 
             0 as LRESULT
@@ -284,29 +316,44 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         WM_KEYDOWN => {
             match wparam as c_int {
                 //@formatter:off
-                VK_HOME  => { SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0); }
-                VK_END   => { SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0); }
-                VK_PRIOR => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEUP as WPARAM, 0); }
-                VK_NEXT  => { SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                VK_UP    => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0); }
-                VK_DOWN  => { SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0); }
-                VK_LEFT  => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0); }
-                VK_RIGHT => { SendMessageW(hwnd, WM_HSCROLL, SB_PAGEDOWN as WPARAM, 0); }
-                _        => {}
-                //@formatter:on
+                VK_HOME => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0);
+                }
+                VK_END => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_BOTTOM as WPARAM, 0);
+                }
+                VK_PRIOR => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_PAGEUP as WPARAM, 0);
+                }
+                VK_NEXT => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0);
+                }
+                VK_UP => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_LINEUP as WPARAM, 0);
+                }
+                VK_DOWN => {
+                    SendMessageW(hwnd, WM_VSCROLL, SB_LINEDOWN as WPARAM, 0);
+                }
+                VK_LEFT => {
+                    SendMessageW(hwnd, WM_HSCROLL, SB_PAGEUP as WPARAM, 0);
+                }
+                VK_RIGHT => {
+                    SendMessageW(hwnd, WM_HSCROLL, SB_PAGEDOWN as WPARAM, 0);
+                }
+                _ => {} //@formatter:on
             }
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             let mut si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_POS,
-                ..mem::uninitialized()
+                ..mem::MaybeUninit::uninit().assume_init()
             };
 
             // Get vertical scroll bar position
@@ -322,7 +369,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // Find painting limits
 
             let paint_beg = cmp::max(0, vert_pos + ps.rcPaint.top / CHAR_HEIGHT);
-            let paint_end = cmp::min(SYS_METRICS.len() as c_int - 1, vert_pos + ps.rcPaint.bottom / CHAR_HEIGHT);
+            let paint_end = cmp::min(
+                SYS_METRICS.len() as c_int - 1,
+                vert_pos + ps.rcPaint.bottom / CHAR_HEIGHT,
+            );
 
             for i in paint_beg..paint_end + 1 {
                 let sys_metric = &SYS_METRICS[i as usize];
@@ -332,36 +382,36 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 SetTextAlign(hdc, TA_LEFT | TA_TOP);
 
                 let label = to_wstr(sys_metric.label);
-                TextOutW(hdc,
-                         x,
-                         y,
-                         label.as_ptr(),
-                         lstrlenW(label.as_ptr()));
+                TextOutW(hdc, x, y, label.as_ptr(), lstrlenW(label.as_ptr()));
 
                 let desc = to_wstr(sys_metric.desc);
-                TextOutW(hdc,
-                         x + 22 * CAPS_WIDTH,
-                         y,
-                         desc.as_ptr(),
-                         lstrlenW(desc.as_ptr()));
+                TextOutW(
+                    hdc,
+                    x + 22 * CAPS_WIDTH,
+                    y,
+                    desc.as_ptr(),
+                    lstrlenW(desc.as_ptr()),
+                );
 
                 SetTextAlign(hdc, TA_RIGHT | TA_TOP);
 
                 let metric = to_wstr(&format!("{:5}", GetSystemMetrics(sys_metric.index)));
-                TextOutW(hdc,
-                         x + 22 * CAPS_WIDTH + 40 * CHAR_WIDTH,
-                         y,
-                         metric.as_ptr(),
-                         lstrlenW(metric.as_ptr()));
+                TextOutW(
+                    hdc,
+                    x + 22 * CAPS_WIDTH + 40 * CHAR_WIDTH,
+                    y,
+                    metric.as_ptr(),
+                    lstrlenW(metric.as_ptr()),
+                );
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

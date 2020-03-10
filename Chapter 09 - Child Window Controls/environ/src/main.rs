@@ -9,43 +9,41 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
-use std::mem;
-use std::slice;
-use std::ptr::{null_mut, null};
 use std::ffi::OsString;
+use std::mem;
 use std::os::windows::ffi::OsStringExt;
-use winapi::ctypes::{c_int};
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          MessageBoxW, LoadIconW, LoadCursorW,
-                          GetDialogBaseUnits, GetSystemMetrics, SetFocus, SetWindowTextW,
-                          MSG, WNDCLASSEXW,
-                          LBN_SELCHANGE,
-                          WM_DESTROY, WM_SETFOCUS, WM_COMMAND, WM_CREATE,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW, SM_CXVSCROLL, SM_CXSCREEN,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT,
-                          WS_CHILD, WS_VISIBLE, LBS_STANDARD, COLOR_WINDOW, SS_LEFT, };
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, LOWORD, HIWORD, DWORD, };
-use winapi::shared::windef::{HWND, HBRUSH, HMENU, };
+use std::ptr::{null, null_mut};
+use std::slice;
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{DWORD, HIWORD, LOWORD, LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
-use winapi::um::processenv::{GetEnvironmentStringsW, FreeEnvironmentStringsW,
-                             GetEnvironmentVariableW};
+use winapi::shared::windef::{HBRUSH, HMENU, HWND};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::processenv::{
+    FreeEnvironmentStringsW, GetEnvironmentStringsW, GetEnvironmentVariableW,
+};
+use winapi::um::winuser::{
+    CreateWindowExW, DefWindowProcW, DispatchMessageW, GetDialogBaseUnits, GetMessageW,
+    GetSystemMetrics, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW,
+    SetFocus, SetWindowTextW, ShowWindow, TranslateMessage, UpdateWindow, COLOR_WINDOW, CS_HREDRAW,
+    CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDI_APPLICATION, LBN_SELCHANGE, LBS_STANDARD,
+    MB_ICONERROR, MSG, SM_CXSCREEN, SM_CXVSCROLL, SS_LEFT, SW_SHOW, WM_COMMAND, WM_CREATE,
+    WM_DESTROY, WM_SETFOCUS, WNDCLASSEXW, WS_CHILD, WS_OVERLAPPEDWINDOW, WS_VISIBLE,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{to_wstr, GetWindowInstance, ListBox_AddString, ListBox_GetTextLen, ListBox_GetCurSel,
-             ListBox_GetText, };
-
+use extras::{
+    to_wstr, GetWindowInstance, ListBox_AddString, ListBox_GetCurSel, ListBox_GetText,
+    ListBox_GetTextLen,
+};
 
 const ID_LIST: u16 = 1;
 const ID_TEXT: u16 = 2;
-
 
 fn main() {
     let app_name = to_wstr("environ");
@@ -70,11 +68,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Environment List Box");
@@ -90,18 +90,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -118,16 +119,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut HWND_LIST: HWND = null_mut();
     static mut HWND_TEXT: HWND = null_mut();
 
@@ -139,37 +140,49 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             // Create listbox and static text windows.
 
             let text_listbox = to_wstr("listbox");
-            HWND_LIST = CreateWindowExW(0, text_listbox.as_ptr(), null(),
-                                        WS_CHILD | WS_VISIBLE | LBS_STANDARD,
-                                        char_x, char_y * 3,
-                                        char_x * 16 + GetSystemMetrics(SM_CXVSCROLL),
-                                        char_y * 5,
-                                        hwnd, ID_LIST as HMENU,
-                                        GetWindowInstance(hwnd),
-                                        null_mut());
+            HWND_LIST = CreateWindowExW(
+                0,
+                text_listbox.as_ptr(),
+                null(),
+                WS_CHILD | WS_VISIBLE | LBS_STANDARD,
+                char_x,
+                char_y * 3,
+                char_x * 16 + GetSystemMetrics(SM_CXVSCROLL),
+                char_y * 5,
+                hwnd,
+                ID_LIST as HMENU,
+                GetWindowInstance(hwnd),
+                null_mut(),
+            );
 
             let text_static = to_wstr("static");
-            HWND_TEXT = CreateWindowExW(0, text_static.as_ptr(), null(),
-                                        WS_CHILD | WS_VISIBLE | SS_LEFT,
-                                        char_x, char_y,
-                                        GetSystemMetrics(SM_CXSCREEN), char_y,
-                                        hwnd, ID_TEXT as HMENU,
-                                        GetWindowInstance(hwnd),
-                                        null_mut());
+            HWND_TEXT = CreateWindowExW(
+                0,
+                text_static.as_ptr(),
+                null(),
+                WS_CHILD | WS_VISIBLE | SS_LEFT,
+                char_x,
+                char_y,
+                GetSystemMetrics(SM_CXSCREEN),
+                char_y,
+                hwnd,
+                ID_TEXT as HMENU,
+                GetWindowInstance(hwnd),
+                null_mut(),
+            );
 
             fill_listbox(HWND_LIST);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_SETFOCUS => {
             SetFocus(HWND_LIST);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_COMMAND => {
             if LOWORD(wparam as DWORD) == ID_LIST && HIWORD(wparam as DWORD) == LBN_SELCHANGE {
-
                 // Get current selection.
 
                 let var_name: Vec<u16> = {
@@ -186,13 +199,14 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 // Get environment string.
 
                 let value: Vec<u16> = {
-                    let length = GetEnvironmentVariableW(var_name.as_ptr(), null_mut(), 0)
-                        as usize;
+                    let length = GetEnvironmentVariableW(var_name.as_ptr(), null_mut(), 0) as usize;
 
                     let mut buffer: Vec<u16> = vec![0; length + 1];
-                    GetEnvironmentVariableW(var_name.as_ptr(),
-                                            buffer.as_mut_ptr(),
-                                            length as DWORD + 1);
+                    GetEnvironmentVariableW(
+                        var_name.as_ptr(),
+                        buffer.as_mut_ptr(),
+                        length as DWORD + 1,
+                    );
                     // let s = OsString::from_wide(&buffer[..length]).into_string().unwrap();
                     // println!("{}", s);
                     buffer
@@ -203,17 +217,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 SetWindowTextW(HWND_TEXT, value.as_ptr());
             }
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
-
 
 unsafe fn fill_listbox(hwnd_list: HWND) {
     /* It it possible to work entirely with the GetEnvironmentStringsW()
@@ -223,7 +236,7 @@ unsafe fn fill_listbox(hwnd_list: HWND) {
     // GetEnvironmentStringsW/FreeEnvironmentStringsW contained within
     // scope of braces.
     let s: String = {
-        let p_var_block: *mut u16 = GetEnvironmentStringsW();  // Get pointer to environment block
+        let p_var_block: *mut u16 = GetEnvironmentStringsW(); // Get pointer to environment block
 
         // Find the length of the the environment block.
         // Double \0\0 terminates block.
@@ -245,7 +258,7 @@ unsafe fn fill_listbox(hwnd_list: HWND) {
 
         FreeEnvironmentStringsW(p_var_block);
 
-        delimited  // everything but 'delimited' goes nicely out of scope.
+        delimited // everything but 'delimited' goes nicely out of scope.
     };
 
     // s = "V1=foo\0V2=bar\0V3=foobar"

@@ -9,38 +9,36 @@
 //               (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
+use std::ptr::{null, null_mut};
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, GetClientRect,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_DESTROY, WM_PAINT, WM_SIZE,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW,
-                          CS_VREDRAW, IDC_ARROW, IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, };
-use winapi::um::wingdi::{GetTextMetricsW, TextOutW, SetMapMode,
-                         SetWindowExtEx, SetViewportExtEx, SaveDC, RestoreDC, DPtoLP,
-                         TEXTMETRICW,
-};
-use winapi::um::winbase::lstrlenW;
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, };
-use winapi::shared::windef::{HWND, RECT, POINT, HDC};
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HDC, HWND, POINT, RECT};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::winbase::lstrlenW;
+use winapi::um::wingdi::{
+    DPtoLP, GetTextMetricsW, RestoreDC, SaveDC, SetMapMode, SetViewportExtEx, SetWindowExtEx,
+    TextOutW, TEXTMETRICW,
+};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetClientRect, GetDC,
+    GetMessageW, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW, ReleaseDC,
+    ShowWindow, TranslateMessage, UpdateWindow, CS_HREDRAW, CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW,
+    IDI_APPLICATION, MB_ICONERROR, MSG, PAINTSTRUCT, SW_SHOW, WM_DESTROY, WM_PAINT, WM_SIZE,
+    WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
 // There are some things missing from winapi,
 // and some that have been given an interesting interpretation
-use extras::{WHITE_BRUSH, SYSTEM_FIXED_FONT, MM_ANISOTROPIC, MM_TEXT, MM_LOMETRIC, MM_HIMETRIC,
-             MM_LOENGLISH, MM_HIENGLISH, MM_TWIPS, to_wstr, GetStockBrush, SelectFont,
-             GetStockFont, };
-
+use extras::{
+    to_wstr, GetStockBrush, GetStockFont, SelectFont, MM_ANISOTROPIC, MM_HIENGLISH, MM_HIMETRIC,
+    MM_LOENGLISH, MM_LOMETRIC, MM_TEXT, MM_TWIPS, SYSTEM_FIXED_FONT, WHITE_BRUSH,
+};
 
 fn main() {
     let app_name = to_wstr("what_size");
@@ -65,11 +63,13 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("What Size is the Window?");
@@ -85,18 +85,19 @@ fn main() {
             null_mut(),          // hWndParent: parent window handle
             null_mut(),          // hMenu: window menu handle
             hinstance,           // hInstance: program instance handle
-            null_mut());         // lpParam: creation parameters
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -113,16 +114,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut CHAR_WIDTH: c_int = 0;
     static mut CAPS_WIDTH: c_int = 0;
     static mut CHAR_HEIGHT: c_int = 0;
@@ -130,7 +131,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
     match message {
         WM_SIZE => {
             let hdc = GetDC(hwnd);
-            let mut tm: TEXTMETRICW = mem::uninitialized();
+            let mut tm: TEXTMETRICW = mem::MaybeUninit::uninit().assume_init();
 
             GetTextMetricsW(hdc, &mut tm);
             CHAR_WIDTH = tm.tmAveCharWidth;
@@ -139,10 +140,10 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             ReleaseDC(hwnd, hdc);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             SelectFont(hdc, GetStockFont(SYSTEM_FIXED_FONT));
@@ -167,37 +168,44 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
 
             EndPaint(hwnd, &ps);
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
 }
 
-
-unsafe fn show(hwnd: HWND,
-               hdc: HDC,
-               text_x: c_int,
-               text_y: c_int,
-               map_mode: c_int,
-               map_mode_name: &str) {
+unsafe fn show(
+    hwnd: HWND,
+    hdc: HDC,
+    text_x: c_int,
+    text_y: c_int,
+    map_mode: c_int,
+    map_mode_name: &str,
+) {
     SaveDC(hdc);
 
     SetMapMode(hdc, map_mode);
 
-    let mut rect: RECT = mem::uninitialized();
+    let mut rect: RECT = mem::MaybeUninit::uninit().assume_init();
     GetClientRect(hwnd, &mut rect);
     DPtoLP(hdc, &mut rect as *mut RECT as *mut POINT, 2);
 
     RestoreDC(hdc, -1);
 
-    let buffer = to_wstr(&format!("{:-20} {:7} {:7} {:7} {:7}",
-                                  map_mode_name,
-                                  rect.left, rect.right,
-                                  rect.top, rect.bottom));
+    let buffer = to_wstr(&format!(
+        "{:-20} {:7} {:7} {:7} {:7}",
+        map_mode_name, rect.left, rect.right, rect.top, rect.bottom
+    ));
 
-    TextOutW(hdc, text_x, text_y, buffer.as_ptr(), lstrlenW(buffer.as_ptr()));
+    TextOutW(
+        hdc,
+        text_x,
+        text_y,
+        buffer.as_ptr(),
+        lstrlenW(buffer.as_ptr()),
+    );
 }

@@ -9,31 +9,29 @@
 //              (c) Charles Petzold, 1998
 //
 #![windows_subsystem = "windows"]
-
 #![cfg(windows)]
-extern crate winapi;
 extern crate extras;
+extern crate winapi;
 
 use std::mem;
-use std::ptr::{null_mut, null};
+use std::ptr::{null, null_mut};
 use winapi::ctypes::c_int;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::winuser::{CreateWindowExW, DefWindowProcW, PostQuitMessage, RegisterClassExW,
-                          ShowWindow, UpdateWindow, GetMessageW, TranslateMessage, DispatchMessageW,
-                          BeginPaint, EndPaint, MessageBoxW, LoadIconW, LoadCursorW, GetDC,
-                          ReleaseDC, InvalidateRect, SetCursor, ShowCursor,
-                          MSG, PAINTSTRUCT, WNDCLASSEXW,
-                          WM_DESTROY, WM_PAINT, WM_MOUSEMOVE, WM_LBUTTONDOWN, WM_LBUTTONUP,
-                          WS_OVERLAPPEDWINDOW, SW_SHOW, CS_HREDRAW, CS_VREDRAW, IDC_ARROW,
-                          IDI_APPLICATION, MB_ICONERROR, CW_USEDEFAULT, MK_LBUTTON, IDC_WAIT, };
-use winapi::um::wingdi::{MoveToEx, LineTo, SetPixel};
-use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
-use winapi::shared::minwindef::{UINT, WPARAM, LPARAM, LRESULT, TRUE, FALSE};
-use winapi::shared::windef::{HWND, POINT};
+use winapi::shared::minwindef::{FALSE, LPARAM, LRESULT, TRUE, UINT, WPARAM};
 use winapi::shared::ntdef::LPCWSTR;
+use winapi::shared::windef::{HWND, POINT};
+use winapi::shared::windowsx::{GET_X_LPARAM, GET_Y_LPARAM};
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::wingdi::{LineTo, MoveToEx, SetPixel};
+use winapi::um::winuser::{
+    BeginPaint, CreateWindowExW, DefWindowProcW, DispatchMessageW, EndPaint, GetDC, GetMessageW,
+    InvalidateRect, LoadCursorW, LoadIconW, MessageBoxW, PostQuitMessage, RegisterClassExW,
+    ReleaseDC, SetCursor, ShowCursor, ShowWindow, TranslateMessage, UpdateWindow, CS_HREDRAW,
+    CS_VREDRAW, CW_USEDEFAULT, IDC_ARROW, IDC_WAIT, IDI_APPLICATION, MB_ICONERROR, MK_LBUTTON, MSG,
+    PAINTSTRUCT, SW_SHOW, WM_DESTROY, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, WM_PAINT,
+    WNDCLASSEXW, WS_OVERLAPPEDWINDOW,
+};
 
-use extras::{WHITE_BRUSH, to_wstr, GetStockBrush};
-
+use extras::{to_wstr, GetStockBrush, WHITE_BRUSH};
 
 const MAX_POINTS: usize = 100;
 
@@ -60,38 +58,41 @@ fn main() {
         let atom = RegisterClassExW(&wndclassex);
 
         if atom == 0 {
-            MessageBoxW(null_mut(),
-                        to_wstr("This program requires Windows NT!").as_ptr(),
-                        app_name.as_ptr(),
-                        MB_ICONERROR);
-            return; //   premature exit
+            MessageBoxW(
+                null_mut(),
+                to_wstr("This program requires Windows NT!").as_ptr(),
+                app_name.as_ptr(),
+                MB_ICONERROR,
+            );
+            return; // premature exit
         }
 
         let caption = to_wstr("Connect−the−Points Mouse Demo");
         let hwnd = CreateWindowExW(
-            0,                 // dwExStyle:
-            atom as LPCWSTR,   // lpClassName: class name or atom
-            caption.as_ptr(),  // lpWindowName: window caption
-            WS_OVERLAPPEDWINDOW,  // dwStyle: window style
-            CW_USEDEFAULT,     // x: initial x position
-            CW_USEDEFAULT,     // y: initial y position
-            CW_USEDEFAULT,     // nWidth: initial x size
-            CW_USEDEFAULT,     // nHeight: initial y size
-            null_mut(),        // hWndParent: parent window handle
-            null_mut(),        // hMenu: window menu handle
-            hinstance,         // hInstance: program instance handle
-            null_mut());       // lpParam: creation parameters
+            0,                   // dwExStyle:
+            atom as LPCWSTR,     // lpClassName: class name or atom
+            caption.as_ptr(),    // lpWindowName: window caption
+            WS_OVERLAPPEDWINDOW, // dwStyle: window style
+            CW_USEDEFAULT,       // x: initial x position
+            CW_USEDEFAULT,       // y: initial y position
+            CW_USEDEFAULT,       // nWidth: initial x size
+            CW_USEDEFAULT,       // nHeight: initial y size
+            null_mut(),          // hWndParent: parent window handle
+            null_mut(),          // hMenu: window menu handle
+            hinstance,           // hInstance: program instance handle
+            null_mut(),
+        ); // lpParam: creation parameters
 
         if hwnd.is_null() {
-            return;  // premature exit
+            return; // premature exit
         }
 
         ShowWindow(hwnd, SW_SHOW);
         if UpdateWindow(hwnd) == 0 {
-            return;  // premature exit
+            return; // premature exit
         }
 
-        let mut msg: MSG = mem::uninitialized();
+        let mut msg: MSG = mem::MaybeUninit::uninit().assume_init();
 
         loop {
             // three states: -1, 0 or non-zero
@@ -108,15 +109,16 @@ fn main() {
                 DispatchMessageW(&msg);
             }
         }
-// return msg.wParam;  // WM_QUIT
+        // return msg.wParam;  // WM_QUIT
     }
 }
 
-unsafe extern "system" fn wnd_proc(hwnd: HWND,
-                                   message: UINT,
-                                   wparam: WPARAM,
-                                   lparam: LPARAM)
-                                   -> LRESULT {
+unsafe extern "system" fn wnd_proc(
+    hwnd: HWND,
+    message: UINT,
+    wparam: WPARAM,
+    lparam: LPARAM,
+) -> LRESULT {
     static mut POINT_ARRAY: [POINT; MAX_POINTS] = [POINT { x: 0, y: 0 }; MAX_POINTS];
     static mut POINT_COUNT: usize = 0;
 
@@ -124,7 +126,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
         WM_LBUTTONDOWN => {
             POINT_COUNT = 0;
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_MOUSEMOVE => {
@@ -140,7 +142,7 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 let y2 = POINT_ARRAY[POINT_COUNT - 1].y;
 
                 // Shortcut hypotenuse by not doing sqrt()
-                (x2 - x) * (x2 - x) + (y2 - y) * (y2 - y) > 4900  // <-adjust this
+                (x2 - x) * (x2 - x) + (y2 - y) * (y2 - y) > 4900 // <-adjust this
             } else {
                 true
             };
@@ -156,16 +158,16 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
                 ReleaseDC(hwnd, hdc);
             }
 
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_LBUTTONUP => {
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_PAINT => {
-            let mut ps: PAINTSTRUCT = mem::uninitialized();
+            let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
             let hdc = BeginPaint(hwnd, &mut ps);
 
             SetCursor(LoadCursorW(null_mut(), IDC_WAIT));
@@ -184,12 +186,12 @@ unsafe extern "system" fn wnd_proc(hwnd: HWND,
             SetCursor(LoadCursorW(null_mut(), IDC_ARROW));
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT  // message processed
+            0 as LRESULT // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
