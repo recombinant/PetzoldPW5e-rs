@@ -39,7 +39,7 @@ use extras::{
 };
 
 const DIVISIONS: usize = 5;
-static CHILD_CLASS_NAME: &'static str = "checker3_child";
+static CHILD_CLASS_NAME: &str = "checker3_child";
 static mut FOCUS_ID: c_int = 0;
 
 fn main() {
@@ -142,9 +142,9 @@ unsafe extern "system" fn wnd_proc(
     match message {
         WM_CREATE => {
             let child_class_name = to_wstr(CHILD_CLASS_NAME);
-            for x in 0..DIVISIONS {
-                for y in 0..DIVISIONS {
-                    HWND_CHILD[x][y] = CreateWindowExW(
+            for (x, column) in HWND_CHILD.iter_mut().enumerate().take(DIVISIONS) {
+                for (y, cell) in column.iter_mut().enumerate().take(DIVISIONS) {
+                    *cell = CreateWindowExW(
                         0,
                         child_class_name.as_ptr(),
                         null(),
@@ -167,10 +167,10 @@ unsafe extern "system" fn wnd_proc(
             let block_x: c_int = GET_X_LPARAM(lparam) / DIVISIONS as c_int;
             let block_y: c_int = GET_Y_LPARAM(lparam) / DIVISIONS as c_int;
 
-            for x in 0..DIVISIONS {
-                for y in 0..DIVISIONS {
+            for (x, column) in HWND_CHILD.iter_mut().enumerate().take(DIVISIONS) {
+                for (y, cell) in column.iter_mut().enumerate().take(DIVISIONS) {
                     MoveWindow(
-                        HWND_CHILD[x][y],
+                        *cell,
                         x as c_int * block_x,
                         y as c_int * block_y,
                         block_x,
@@ -200,7 +200,6 @@ unsafe extern "system" fn wnd_proc(
             let mut y = FOCUS_ID >> 8;
 
             match wparam as c_int {
-                //@formatter:off
                 VK_UP => {
                     y -= 1;
                 }
@@ -223,7 +222,7 @@ unsafe extern "system" fn wnd_proc(
                 }
                 _ => {
                     return 0 as LRESULT;
-                } //@formatter:on
+                }
             }
 
             x = (x + divisions) % divisions;
@@ -300,12 +299,10 @@ unsafe extern "system" fn child_wnd_proc(
             // Draw the "focus" rectangle
 
             if hwnd == GetFocus() {
-                //@formatter:off
                 rect.left += rect.right / 10;
                 rect.right -= rect.left;
                 rect.top += rect.bottom / 10;
                 rect.bottom -= rect.top;
-                //@formatter:on
 
                 SelectBrush(hdc, GetStockBrush(NULL_BRUSH));
                 SelectPen(hdc, CreatePen(PS_DASH, 0, 0));

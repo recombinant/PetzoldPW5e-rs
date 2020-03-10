@@ -10,6 +10,7 @@
 //
 #![windows_subsystem = "windows"]
 #![cfg(windows)]
+#![allow(clippy::identity_op)]
 extern crate extras;
 extern crate winapi;
 

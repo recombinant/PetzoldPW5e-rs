@@ -45,8 +45,7 @@ struct DevCaps<'a> {
     desc: &'a str,
 }
 
-//@formatter:off
-const DEV_CAPS: &'static [DevCaps] = &[
+const DEV_CAPS: &[DevCaps] = &[
     DevCaps {
         index: HORZSIZE,
         label: "HORZSIZE",
@@ -148,7 +147,6 @@ const DEV_CAPS: &'static [DevCaps] = &[
         desc: "Actual color resolution:",
     },
 ];
-//@formatter:on
 
 fn main() {
     let app_name = to_wstr("dev_caps1");

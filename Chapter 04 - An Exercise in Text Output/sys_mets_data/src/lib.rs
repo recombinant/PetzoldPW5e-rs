@@ -28,7 +28,7 @@ pub struct SysMetrics<'a> {
     pub desc: &'a str,
 }
 
-pub const SYS_METRICS: &'static [SysMetrics] = &[
+pub const SYS_METRICS: &[SysMetrics] = &[
     SysMetrics {
         index: SM_CYSCREEN,
         label: "SM_CYSCREEN",

@@ -263,12 +263,12 @@ unsafe fn fill_listbox(hwnd_list: HWND) {
 
     // s = "V1=foo\0V2=bar\0V3=foobar"
     // String 's' can now be split on \0.
-    for line in s.split("\0").collect::<Vec<&str>>() {
-        if line.starts_with("=") {
+    for line in s.split('\0').collect::<Vec<&str>>() {
+        if line.starts_with('=') {
             continue; // Skip lines names beginning with '='
         };
-        // just want value before the "="
-        let var = line.split("=").take(1).next().unwrap();
+        // just want value before the '='
+        let var = line.split('=').take(1).next().unwrap();
         let var_w = to_wstr(var);
         ListBox_AddString(hwnd_list, var_w.as_ptr());
     }

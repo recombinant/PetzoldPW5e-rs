@@ -136,7 +136,7 @@ unsafe extern "system" fn wnd_proc(
         face_name: &'a str,
     }
 
-    const STOCK_FONTS: &'static [StockFont] = &[
+    const STOCK_FONTS: &[StockFont] = &[
         StockFont {
             index: OEM_FIXED_FONT,
             face_name: "OEM_FIXED_FONT",
@@ -171,7 +171,7 @@ unsafe extern "system" fn wnd_proc(
 
     match message {
         WM_CREATE => {
-            let mut si: SCROLLINFO = SCROLLINFO {
+            let si: SCROLLINFO = SCROLLINFO {
                 cbSize: mem::size_of::<SCROLLINFO>() as UINT,
                 fMask: SIF_RANGE,
                 nMin: 0,
@@ -196,7 +196,6 @@ unsafe extern "system" fn wnd_proc(
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) {
-                //@formatter:off
                 SB_TOP => {
                     si.nPos = si.nMin;
                 }
@@ -212,7 +211,7 @@ unsafe extern "system" fn wnd_proc(
                 SB_THUMBPOSITION => {
                     si.nPos = si.nTrackPos;
                 }
-                _ => {} //@formatter:on
+                _ => {}
             }
 
             // Because messages are sent from WM_KEYDOWN which has
@@ -234,7 +233,6 @@ unsafe extern "system" fn wnd_proc(
 
         WM_KEYDOWN => {
             match wparam as c_int {
-                //@formatter:off
                 VK_HOME => {
                     SendMessageW(hwnd, WM_VSCROLL, SB_TOP as WPARAM, 0);
                 }
@@ -247,7 +245,7 @@ unsafe extern "system" fn wnd_proc(
                 VK_NEXT | VK_RIGHT | VK_DOWN => {
                     SendMessageW(hwnd, WM_VSCROLL, SB_PAGEDOWN as WPARAM, 0);
                 }
-                _ => {} //@formatter:on
+                _ => {}
             }
 
             0 as LRESULT // message processed

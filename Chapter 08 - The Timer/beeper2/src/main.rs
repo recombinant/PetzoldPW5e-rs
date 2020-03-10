@@ -141,7 +141,7 @@ unsafe extern "system" fn timer_proc(
 ) {
     static mut FLIP_FLOP: bool = false;
 
-    MessageBeep(0xffffffff);
+    MessageBeep(0xffff_ffff);
     FLIP_FLOP = !FLIP_FLOP;
 
     let mut rc: RECT = mem::MaybeUninit::uninit().assume_init();

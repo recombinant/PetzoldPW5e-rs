@@ -142,12 +142,10 @@ unsafe extern "system" fn wnd_proc(
         top: 0,
         bottom: 0,
     };
-    static HEADER1: &'static str =
-        "Message        Key       Char     Repeat Scan Ext ALT Prev Tran";
-    static HEADER2: &'static str =
-        "_______        ___       ____     ______ ____ ___ ___ ____ ____";
+    static HEADER1: &str = "Message        Key       Char     Repeat Scan Ext ALT Prev Tran";
+    static HEADER2: &str = "_______        ___       ____     ______ ____ ___ ___ ____ ____";
 
-    static KEY_STRINGS: &'static [&'static str] = &[
+    static KEY_STRINGS: &[&str] = &[
         "WM_KEYDOWN",
         "WM_KEYUP",
         "WM_CHAR",
@@ -308,22 +306,22 @@ unsafe extern "system" fn wnd_proc(
                             key_name,
                             LOWORD(msg.lParam as DWORD),
                             HIWORD(msg.lParam as DWORD) & 0xff,
-                            if 0x01000000 & msg.lParam != 0 {
+                            if 0x0100_0000 & msg.lParam != 0 {
                                 "YES"
                             } else {
                                 "NO"
                             },
-                            if 0x20000000 & msg.lParam != 0 {
+                            if 0x2000_0000 & msg.lParam != 0 {
                                 "YES"
                             } else {
                                 "NO"
                             },
-                            if 0x40000000 & msg.lParam != 0 {
+                            if 0x4000_0000 & msg.lParam != 0 {
                                 "DOWN"
                             } else {
                                 "UP"
                             },
-                            if 0x80000000 & msg.lParam != 0 {
+                            if 0x8000_0000 & msg.lParam != 0 {
                                 "UP"
                             } else {
                                 "DOWN"
@@ -337,22 +335,22 @@ unsafe extern "system" fn wnd_proc(
                             msg.wParam,
                             LOWORD(msg.lParam as DWORD),
                             HIWORD(msg.lParam as DWORD) & 0xff,
-                            if 0x01000000 & msg.lParam != 0 {
+                            if 0x0100_0000 & msg.lParam != 0 {
                                 "YES"
                             } else {
                                 "NO"
                             },
-                            if 0x20000000 & msg.lParam != 0 {
+                            if 0x2000_0000 & msg.lParam != 0 {
                                 "YES"
                             } else {
                                 "NO"
                             },
-                            if 0x40000000 & msg.lParam != 0 {
+                            if 0x4000_0000 & msg.lParam != 0 {
                                 "DOWN"
                             } else {
                                 "UP"
                             },
-                            if 0x80000000 & msg.lParam != 0 {
+                            if 0x8000_0000 & msg.lParam != 0 {
                                 "UP"
                             } else {
                                 "DOWN"

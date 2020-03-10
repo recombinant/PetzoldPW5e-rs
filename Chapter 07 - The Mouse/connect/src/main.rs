@@ -174,10 +174,16 @@ unsafe extern "system" fn wnd_proc(
             ShowCursor(TRUE);
 
             if POINT_COUNT > 1 {
-                for i in 0..POINT_COUNT - 1 {
-                    for j in i + 1..POINT_COUNT {
-                        MoveToEx(hdc, POINT_ARRAY[i].x, POINT_ARRAY[i].y, null_mut());
-                        LineTo(hdc, POINT_ARRAY[j].x, POINT_ARRAY[j].y);
+                // for i in 0..POINT_COUNT - 1 {
+                //     for j in i + 1..POINT_COUNT {
+                //         MoveToEx(hdc, POINT_ARRAY[i].x, POINT_ARRAY[i].y, null_mut());
+                //         LineTo(hdc, POINT_ARRAY[j].x, POINT_ARRAY[j].y);
+                //     }
+                // }
+                for (i, point1) in POINT_ARRAY.iter().enumerate().take(POINT_COUNT - 1) {
+                    for point2 in POINT_ARRAY.iter().take(POINT_COUNT).skip(i + 1) {
+                        MoveToEx(hdc, point1.x, point1.y, null_mut());
+                        LineTo(hdc, point2.x, point2.y);
                     }
                 }
             }

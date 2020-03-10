@@ -200,7 +200,6 @@ unsafe extern "system" fn wnd_proc(
             let vert_pos = si.nPos;
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) as LPARAM {
-                //@formatter:off
                 SB_TOP => {
                     si.nPos = si.nMin;
                 }
@@ -222,7 +221,7 @@ unsafe extern "system" fn wnd_proc(
                 SB_THUMBPOSITION => {
                     si.nPos = si.nTrackPos;
                 }
-                _ => {} //@formatter:on
+                _ => {}
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -256,7 +255,6 @@ unsafe extern "system" fn wnd_proc(
             let horz_pos = si.nPos;
 
             match GET_WM_HSCROLL_CODE(wparam, lparam) as LPARAM {
-                //@formatter:off
                 SB_LINELEFT => {
                     si.nPos -= 1;
                 }
@@ -272,7 +270,7 @@ unsafe extern "system" fn wnd_proc(
                 SB_THUMBPOSITION => {
                     si.nPos = si.nTrackPos;
                 }
-                _ => {} //@formatter:on
+                _ => {}
             }
 
             // Set the position and then retrieve it.  Due to adjustments
@@ -319,7 +317,7 @@ unsafe extern "system" fn wnd_proc(
                 vert_pos + ps.rcPaint.bottom / CHAR_HEIGHT,
             );
 
-            for i in paint_beg..paint_end + 1 {
+            for i in paint_beg..=paint_end + 1 {
                 let sys_metric = &SYS_METRICS[i as usize];
                 let x = CHAR_WIDTH * (1 - horz_pos);
                 let y = CHAR_HEIGHT * (i - vert_pos);

@@ -134,7 +134,7 @@ unsafe extern "system" fn wnd_proc(
     wparam: WPARAM,
     lparam: LPARAM,
 ) -> LRESULT {
-    static PRIMARY_COLORS: [COLORREF; NUM_CTRLS] = [0x0000ff, 0x00ff00, 0xff0000]; // r g b
+    static PRIMARY_COLORS: [COLORREF; NUM_CTRLS] = [0x00_00_ff, 0x00_ff_00, 0xff_00_00]; // r g b
     static mut HBRUSH_ARRAY: [HBRUSH; NUM_CTRLS] = [0 as HBRUSH; NUM_CTRLS];
     static mut HBRUSH_STATIC: HBRUSH = 0 as HBRUSH;
     static mut HWND_SCROLL: [HWND; NUM_CTRLS] = [0 as HWND; NUM_CTRLS];
@@ -149,7 +149,7 @@ unsafe extern "system" fn wnd_proc(
         top: 0,
         bottom: 0,
     };
-    static COLOR_LABELS: [&'static str; NUM_CTRLS] = ["Red", "Green", "Blue"];
+    static COLOR_LABELS: [&str; NUM_CTRLS] = ["Red", "Green", "Blue"];
 
     match message {
         WM_CREATE => {
@@ -371,7 +371,7 @@ unsafe extern "system" fn wnd_proc(
 
         WM_CTLCOLORSCROLLBAR => {
             let i = GetWindowLongPtrW(lparam as HWND, GWLP_ID) as usize;
-            return HBRUSH_ARRAY[i] as LRESULT;
+            HBRUSH_ARRAY[i] as LRESULT
         }
 
         WM_CTLCOLORSTATIC => {
@@ -399,8 +399,8 @@ unsafe extern "system" fn wnd_proc(
                 GetStockBrush(WHITE_BRUSH) as LONG_PTR,
             ) as HBRUSH);
 
-            for i in 0..NUM_CTRLS {
-                DeleteBrush(HBRUSH_ARRAY[i]);
+            for brush in HBRUSH_ARRAY.iter().take(NUM_CTRLS) {
+                DeleteBrush(*brush);
             }
             DeleteBrush(HBRUSH_STATIC);
 

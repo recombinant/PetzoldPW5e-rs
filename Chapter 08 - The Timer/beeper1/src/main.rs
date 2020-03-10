@@ -128,7 +128,7 @@ unsafe extern "system" fn wnd_proc(
         }
 
         WM_TIMER => {
-            MessageBeep(0xFFFFFFFF);
+            MessageBeep(0xffff_ffff);
             FLIP_FLOP = !FLIP_FLOP;
             InvalidateRect(hwnd, null(), FALSE);
             0 as LRESULT // message processed

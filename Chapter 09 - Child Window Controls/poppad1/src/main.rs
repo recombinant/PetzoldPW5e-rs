@@ -35,7 +35,7 @@ use winapi::um::winuser::{
 use extras::{to_wstr, GetStockBrush, WHITE_BRUSH};
 
 const ID_EDIT: c_int = 1;
-static APP_NAME: &'static str = "poppad1";
+static APP_NAME: &str = "poppad1";
 
 fn main() {
     let app_name = to_wstr(APP_NAME);

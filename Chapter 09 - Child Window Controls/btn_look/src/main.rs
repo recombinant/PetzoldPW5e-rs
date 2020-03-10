@@ -46,7 +46,7 @@ pub struct Button<'a> {
     pub text: &'a str,
 }
 
-pub const BUTTONS: &'static [Button; BUTTON_COUNT] = &[
+pub const BUTTONS: &[Button; BUTTON_COUNT] = &[
     Button {
         style: BS_PUSHBUTTON,
         text: "PUSHBUTTON",
@@ -183,8 +183,8 @@ unsafe extern "system" fn wnd_proc(
     };
     static mut HWND_BUTTON: [HWND; BUTTON_COUNT] = [null_mut(); BUTTON_COUNT];
 
-    static HEADER1: &'static str = "message            wParam       lParam";
-    static HEADER2: &'static str = "_______            ______       ______";
+    static HEADER1: &str = "message            wParam       lParam";
+    static HEADER2: &str = "_______            ______       ______";
 
     match message {
         WM_CREATE => {

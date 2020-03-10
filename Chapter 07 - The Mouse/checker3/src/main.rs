@@ -35,7 +35,7 @@ use winapi::um::winuser::{
 use extras::{to_wstr, GetStockBrush, GetWindowInstance, GWLP_USERDATA, WHITE_BRUSH};
 
 const DIVISIONS: usize = 5;
-static CHILD_CLASS_NAME: &'static str = "checker3_child";
+static CHILD_CLASS_NAME: &str = "checker3_child";
 
 fn main() {
     let app_name = to_wstr("checker3");
@@ -137,9 +137,9 @@ unsafe extern "system" fn wnd_proc(
     match message {
         WM_CREATE => {
             let child_class_name = to_wstr(CHILD_CLASS_NAME);
-            for x in 0..DIVISIONS {
-                for y in 0..DIVISIONS {
-                    HWND_CHILD[x][y] = CreateWindowExW(
+            for (x, column) in HWND_CHILD.iter_mut().enumerate().take(DIVISIONS) {
+                for (y, cell) in column.iter_mut().enumerate().take(DIVISIONS) {
+                    *cell = CreateWindowExW(
                         0,
                         child_class_name.as_ptr(),
                         null(),
@@ -162,10 +162,10 @@ unsafe extern "system" fn wnd_proc(
             let block_x: c_int = GET_X_LPARAM(lparam) / DIVISIONS as c_int;
             let block_y: c_int = GET_Y_LPARAM(lparam) / DIVISIONS as c_int;
 
-            for x in 0..DIVISIONS {
-                for y in 0..DIVISIONS {
+            for (x, column) in HWND_CHILD.iter_mut().enumerate().take(DIVISIONS) {
+                for (y, cell) in column.iter_mut().enumerate().take(DIVISIONS) {
                     MoveWindow(
-                        HWND_CHILD[x][y],
+                        *cell,
                         x as c_int * block_x,
                         y as c_int * block_y,
                         block_x,

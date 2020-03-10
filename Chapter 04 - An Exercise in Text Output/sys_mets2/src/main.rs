@@ -175,7 +175,6 @@ unsafe extern "system" fn wnd_proc(
             GetScrollInfo(hwnd, SB_VERT, &mut si);
 
             match GET_WM_VSCROLL_CODE(wparam, lparam) {
-                //@formatter:off
                 SB_LINEUP => {
                     VSCROLL_POS -= 1;
                 }
@@ -191,7 +190,7 @@ unsafe extern "system" fn wnd_proc(
                 SB_THUMBPOSITION => {
                     VSCROLL_POS = si.nTrackPos;
                 }
-                _ => {} //@formatter:on
+                _ => {}
             }
 
             VSCROLL_POS = cmp::max(si.nMin, cmp::min(VSCROLL_POS, si.nMax));

@@ -230,7 +230,6 @@ unsafe extern "system" fn wnd_proc(
 
         WM_KEYDOWN => {
             match wparam as c_int {
-                //@formatter:off
                 VK_HOME => {
                     CARET_X = 0;
                 }
@@ -255,7 +254,7 @@ unsafe extern "system" fn wnd_proc(
                 VK_DOWN => {
                     CARET_Y = cmp::min(CARET_Y + 1, BUFFER_Y_DIM - 1);
                 }
-                //@formatter:on
+
                 VK_DELETE => {
                     BUFFER_VEC.with(|v| {
                         v.borrow_mut().remove(buf_pos(CARET_X, CARET_Y));

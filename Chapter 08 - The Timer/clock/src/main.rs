@@ -234,7 +234,6 @@ unsafe fn draw_clock(hdc: HDC) {
 }
 
 unsafe fn draw_hands(hdc: HDC, pst: &SYSTEMTIME, change: bool) {
-    //@formatter:off
     const PT: [[POINT; 5]; 3] = [
         [
             POINT { x: 0, y: -150 },
@@ -258,7 +257,6 @@ unsafe fn draw_hands(hdc: HDC, pst: &SYSTEMTIME, change: bool) {
             POINT { x: 0, y: 800 },
         ],
     ];
-    //@formatter:on
 
     let angle: [c_int; 3] = [
         (pst.wHour as c_int * 30) % 360 + pst.wMinute as c_int / 2,

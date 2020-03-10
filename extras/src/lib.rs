@@ -42,7 +42,7 @@ extern "system" {
 }
 
 // This should be in winapi::um::winnls
-pub const LOCALE_STIMEFORMAT: LCTYPE = 0x00001003;
+pub const LOCALE_STIMEFORMAT: LCTYPE = 0x0000_1003;
 pub const LOCALE_NAME_USER_DEFAULT: LPCWSTR = null();
 
 // There are some things missing from winapi,

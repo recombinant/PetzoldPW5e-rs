@@ -136,7 +136,7 @@ unsafe extern "system" fn wnd_proc(
                 DeleteRgn(HRGN_CLIP);
             }
 
-            let hrgn_tmp: [HRGN; 6] = [
+            let mut hrgn_tmp: [HRGN; 6] = [
                 CreateEllipticRgn(
                     0,
                     CLIENT_HEIGHT / 3,
@@ -165,15 +165,8 @@ unsafe extern "system" fn wnd_proc(
             UnionRgn(hrgn_tmp[5], hrgn_tmp[2], hrgn_tmp[3]);
             XorRgn(HRGN_CLIP, hrgn_tmp[4], hrgn_tmp[5]);
 
-            //  // rustc 1.23.0 requires some ugly casting here...
-            //
-            //  for hrgn in hrgn_tmp.iter_mut() {
-            //      DeleteRgn(hrgn as *mut HRGN as HRGN);
-            //  }
-
-            // Iterate over indices, saves unnecessary casting
-            for i in 0..hrgn_tmp.len() {
-                DeleteRgn(hrgn_tmp[i]);
+            for hrgn in hrgn_tmp.iter_mut() {
+                DeleteRgn(*hrgn);
             }
 
             SetCursor(hcursor);

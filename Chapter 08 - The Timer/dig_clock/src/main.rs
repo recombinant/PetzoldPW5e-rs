@@ -159,7 +159,7 @@ unsafe extern "system" fn wnd_proc(
                 let fmt = OsString::from_wide(&locale_buffer[..(len - 1) as usize])
                     .into_string()
                     .unwrap();
-                USE_24HR = fmt.contains("H"); // any capital H means 24hr
+                USE_24HR = fmt.contains('H'); // any capital H means 24hr
                 SUPPRESS = !fmt.to_lowercase().contains("hh"); // single "h" means suppress
             } else {
                 // call GetLastError() to find out what went wrong...
@@ -212,7 +212,6 @@ unsafe extern "system" fn wnd_proc(
 }
 
 unsafe fn display_digit(hdc: HDC, num: usize) {
-    //@formatter:off
     static SEVEN_SEGMENT: [[bool; 7]; 10] = [
         [true, true, true, false, true, true, true],     // 0
         [false, false, true, false, false, true, false], // 1
@@ -226,7 +225,7 @@ unsafe fn display_digit(hdc: HDC, num: usize) {
         [true, true, true, true, false, true, true],
     ]; // 9
 
-    static SEGMENT: [[POINT; 6]; 7] = [
+    static SEGMENTS: [[POINT; 6]; 7] = [
         [
             POINT { x: 7, y: 6 },
             POINT { x: 11, y: 2 },
@@ -284,11 +283,10 @@ unsafe fn display_digit(hdc: HDC, num: usize) {
             POINT { x: 11, y: 70 },
         ],
     ];
-    //@formatter:on
 
-    for segment in 0..7 {
-        if SEVEN_SEGMENT[num][segment] {
-            Polygon(hdc, &SEGMENT[segment][0], 6);
+    for (idx, segment) in SEGMENTS.iter().enumerate() {
+        if SEVEN_SEGMENT[num][idx] {
+            Polygon(hdc, &segment[0], 6);
         }
     }
 }
