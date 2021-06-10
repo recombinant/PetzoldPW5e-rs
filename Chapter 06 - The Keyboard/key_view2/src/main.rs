@@ -233,7 +233,7 @@ unsafe extern "system" fn wnd_proc(
 
             InvalidateRect(hwnd, null_mut(), TRUE);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KEYDOWN | WM_KEYUP | WM_CHAR | WM_DEADCHAR | WM_SYSKEYDOWN | WM_SYSKEYUP
@@ -410,12 +410,12 @@ unsafe extern "system" fn wnd_proc(
             DeleteFont(SelectFont(hdc, GetStockFont(SYSTEM_FONT)));
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

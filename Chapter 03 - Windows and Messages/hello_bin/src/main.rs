@@ -136,7 +136,7 @@ unsafe extern "system" fn wnd_proc(
 
             let sound: Vec<u16> = path.into_os_string().encode_wide().chain(once(0)).collect();
             PlaySoundW(sound.as_ptr(), null_mut(), SND_FILENAME | SND_ASYNC);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         WM_PAINT => {
             let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
@@ -154,11 +154,11 @@ unsafe extern "system" fn wnd_proc(
             );
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

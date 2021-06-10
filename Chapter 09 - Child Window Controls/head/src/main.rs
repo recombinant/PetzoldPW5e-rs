@@ -227,18 +227,18 @@ unsafe extern "system" fn wnd_proc(
             let all = to_wstr("*.*");
             ListBox_Dir(HWND_LIST, DIRATTR, all.as_ptr());
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
             RECT.right = GET_X_LPARAM(lparam);
             RECT.bottom = GET_Y_LPARAM(lparam);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
             SetFocus(HWND_LIST);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_COMMAND => {
@@ -249,7 +249,7 @@ unsafe extern "system" fn wnd_proc(
             if LOWORD(wparam as DWORD) == ID_LIST && HIWORD(wparam as DWORD) == LBN_DBLCLK {
                 let i = ListBox_GetCurSel(HWND_LIST);
                 if LB_ERR == i {
-                    return 0 as LRESULT; // message processed
+                    return 0; // message processed
                 }
 
                 ListBox_GetText(HWND_LIST, i, WSTR_BUFFER.as_mut_ptr());
@@ -318,7 +318,7 @@ unsafe extern "system" fn wnd_proc(
                 InvalidateRect(hwnd, null(), TRUE);
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -366,12 +366,12 @@ unsafe extern "system" fn wnd_proc(
                     EndPaint(hwnd, &ps);
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

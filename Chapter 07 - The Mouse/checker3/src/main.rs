@@ -155,7 +155,7 @@ unsafe extern "system" fn wnd_proc(
                     );
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -174,17 +174,17 @@ unsafe extern "system" fn wnd_proc(
                     );
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONDOWN => {
             MessageBeep(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
@@ -199,7 +199,7 @@ unsafe extern "system" fn child_wnd_proc(
     match message {
         WM_CREATE => {
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0); // on/off flag
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONDOWN => {
@@ -209,7 +209,7 @@ unsafe extern "system" fn child_wnd_proc(
                 1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA),
             );
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -228,7 +228,7 @@ unsafe extern "system" fn child_wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

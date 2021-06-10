@@ -208,7 +208,7 @@ unsafe extern "system" fn wnd_proc(
             }
 
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
@@ -217,7 +217,7 @@ unsafe extern "system" fn wnd_proc(
             CreateCaret(hwnd, null_mut(), CHAR_PIXEL_WIDTH, CHAR_PIXEL_HEIGHT);
             SetCaretPos(CARET_X * CHAR_PIXEL_WIDTH, CARET_Y * CHAR_PIXEL_HEIGHT);
             ShowCaret(hwnd);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KILLFOCUS => {
@@ -225,7 +225,7 @@ unsafe extern "system" fn wnd_proc(
 
             HideCaret(hwnd);
             DestroyCaret();
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KEYDOWN => {
@@ -305,7 +305,7 @@ unsafe extern "system" fn wnd_proc(
                 _ => {}
             }
             SetCaretPos(CARET_X * CHAR_PIXEL_WIDTH, CARET_Y * CHAR_PIXEL_HEIGHT);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_CHAR => {
@@ -417,7 +417,7 @@ unsafe extern "system" fn wnd_proc(
 
             SetCaretPos(CARET_X * CHAR_PIXEL_WIDTH, CARET_Y * CHAR_PIXEL_HEIGHT);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -456,12 +456,12 @@ unsafe extern "system" fn wnd_proc(
             DeleteFont(SelectFont(hdc, GetStockFont(SYSTEM_FONT)));
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

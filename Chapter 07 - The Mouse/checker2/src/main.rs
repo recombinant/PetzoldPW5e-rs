@@ -129,17 +129,17 @@ unsafe extern "system" fn wnd_proc(
         WM_SIZE => {
             BLOCK_X = GET_X_LPARAM(lparam) / DIVISIONS as c_int;
             BLOCK_Y = GET_Y_LPARAM(lparam) / DIVISIONS as c_int;
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
             ShowCursor(TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KILLFOCUS => {
             ShowCursor(FALSE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KEYDOWN => {
@@ -190,7 +190,7 @@ unsafe extern "system" fn wnd_proc(
 
             ClientToScreen(hwnd, &mut point);
             SetCursorPos(point.x, point.y);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONDOWN => {
@@ -211,7 +211,7 @@ unsafe extern "system" fn wnd_proc(
             } else {
                 MessageBeep(0);
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -238,12 +238,12 @@ unsafe extern "system" fn wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

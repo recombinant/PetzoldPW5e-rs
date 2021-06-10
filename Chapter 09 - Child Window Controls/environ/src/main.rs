@@ -173,12 +173,12 @@ unsafe extern "system" fn wnd_proc(
 
             fill_listbox(HWND_LIST);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
             SetFocus(HWND_LIST);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_COMMAND => {
@@ -217,12 +217,12 @@ unsafe extern "system" fn wnd_proc(
                 SetWindowTextW(HWND_TEXT, value.as_ptr());
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

@@ -135,14 +135,14 @@ unsafe extern "system" fn wnd_proc(
             let text: Vec<u16> = to_wstr("DISPLAY");
             HDC_SCREEN = CreateDCW(text.as_ptr(), null(), null(), null());
             SetTimer(hwnd, ID_TIMER, 100, None);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DISPLAYCHANGE => {
             let text: Vec<u16> = to_wstr("DISPLAY");
             DeleteDC(HDC_SCREEN);
             HDC_SCREEN = CreateDCW(text.as_ptr(), null(), null(), null());
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_TIMER => {
@@ -154,7 +154,7 @@ unsafe extern "system" fn wnd_proc(
                 CR_LAST = CR;
                 InvalidateRect(hwnd, null(), FALSE);
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -179,13 +179,13 @@ unsafe extern "system" fn wnd_proc(
             );
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         _ => DefWindowProcW(hwnd, message, wparam, lparam),

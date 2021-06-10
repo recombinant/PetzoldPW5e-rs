@@ -148,13 +148,13 @@ unsafe extern "system" fn wnd_proc(
             let mut st: SYSTEMTIME = mem::MaybeUninit::uninit().assume_init();
             GetLocalTime(&mut st);
             ST_PREVIOUS = st;
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_TIMER => {
@@ -176,7 +176,7 @@ unsafe extern "system" fn wnd_proc(
             ReleaseDC(hwnd, hdc);
 
             ST_PREVIOUS = st;
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -188,13 +188,13 @@ unsafe extern "system" fn wnd_proc(
             draw_hands(hdc, &ST_PREVIOUS, true);
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         _ => DefWindowProcW(hwnd, message, wparam, lparam),

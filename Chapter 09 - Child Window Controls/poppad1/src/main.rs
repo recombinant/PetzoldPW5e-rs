@@ -148,12 +148,12 @@ unsafe extern "system" fn wnd_proc(
                 null_mut(),
             );
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
             SetFocus(HWND_EDIT);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -161,7 +161,7 @@ unsafe extern "system" fn wnd_proc(
             let client_height = GET_Y_LPARAM(lparam);
 
             MoveWindow(HWND_EDIT, 0, 0, client_width, client_height, TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_COMMAND => {
@@ -173,12 +173,12 @@ unsafe extern "system" fn wnd_proc(
                     MessageBoxW(hwnd, text.as_ptr(), caption.as_ptr(), MB_OK | MB_ICONSTOP);
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

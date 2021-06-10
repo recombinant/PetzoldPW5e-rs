@@ -175,7 +175,7 @@ unsafe extern "system" fn wnd_proc(
                 DELTA_PER_LINE = WHEEL_DELTA / scroll_lines as c_short;
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -205,7 +205,7 @@ unsafe extern "system" fn wnd_proc(
             };
             SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_VSCROLL => {
@@ -260,7 +260,7 @@ unsafe extern "system" fn wnd_proc(
                 ScrollWindow(hwnd, 0, CHAR_HEIGHT * (vert_pos - si.nPos), null(), null());
             }
 
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_HSCROLL => {
@@ -309,7 +309,7 @@ unsafe extern "system" fn wnd_proc(
                 ScrollWindow(hwnd, CHAR_WIDTH * (horz_pos - si.nPos), 0, null(), null());
             }
 
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_KEYDOWN => {
@@ -341,7 +341,7 @@ unsafe extern "system" fn wnd_proc(
                 _ => {}
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_MOUSEWHEEL => {
@@ -360,7 +360,7 @@ unsafe extern "system" fn wnd_proc(
                     ACCUM_DELTA += DELTA_PER_LINE;
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -423,12 +423,12 @@ unsafe extern "system" fn wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

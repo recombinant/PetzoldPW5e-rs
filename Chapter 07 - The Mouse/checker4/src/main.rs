@@ -160,7 +160,7 @@ unsafe extern "system" fn wnd_proc(
                     );
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -179,18 +179,18 @@ unsafe extern "system" fn wnd_proc(
                     );
                 }
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONDOWN => {
             MessageBeep(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         // On set-focus message, set focus to child window
         WM_SETFOCUS => {
             SetFocus(GetDlgItem(hwnd, FOCUS_ID));
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         // On key-down message, possibly change the focus window
@@ -221,7 +221,7 @@ unsafe extern "system" fn wnd_proc(
                     y = x;
                 }
                 _ => {
-                    return 0 as LRESULT;
+                    return 0; // message processed
                 }
             }
 
@@ -231,12 +231,12 @@ unsafe extern "system" fn wnd_proc(
             FOCUS_ID = y << 8 | x;
 
             SetFocus(GetDlgItem(hwnd, FOCUS_ID));
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
@@ -251,7 +251,7 @@ unsafe extern "system" fn child_wnd_proc(
     match message {
         WM_CREATE => {
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, 0); // on/off flag
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_KEYDOWN | WM_LBUTTONDOWN => {
@@ -260,7 +260,7 @@ unsafe extern "system" fn child_wnd_proc(
             let wp = wparam as c_int;
             if message == WM_KEYDOWN && wp != VK_RETURN && wp != VK_SPACE {
                 SendMessageW(GetParent(hwnd), message, wparam, lparam);
-                return 0 as LRESULT;
+                return 0; // message processed
             }
             // For Return and Space, fall through to toggle the square
 
@@ -270,7 +270,7 @@ unsafe extern "system" fn child_wnd_proc(
                 1 ^ GetWindowLongPtrW(hwnd, GWLP_USERDATA),
             );
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS | WM_KILLFOCUS => {
@@ -278,7 +278,7 @@ unsafe extern "system" fn child_wnd_proc(
                 FOCUS_ID = GetWindowLongPtrW(hwnd, GWLP_ID) as c_int;
             }
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -311,7 +311,7 @@ unsafe extern "system" fn child_wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

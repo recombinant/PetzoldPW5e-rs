@@ -211,7 +211,7 @@ unsafe extern "system" fn wnd_proc(
                 ); // lpParam
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -219,7 +219,7 @@ unsafe extern "system" fn wnd_proc(
             TARGET_RECT.top = 2 * CHAR_Y;
             TARGET_RECT.right = LOWORD(lparam as DWORD) as LONG;
             TARGET_RECT.bottom = HIWORD(lparam as DWORD) as LONG;
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -248,7 +248,7 @@ unsafe extern "system" fn wnd_proc(
             );
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DRAWITEM | WM_COMMAND => {
@@ -290,12 +290,12 @@ unsafe extern "system" fn wnd_proc(
 
             ReleaseDC(hwnd, hdc);
             ValidateRect(hwnd, &TARGET_RECT);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

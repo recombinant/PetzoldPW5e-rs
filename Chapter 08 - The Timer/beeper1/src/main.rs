@@ -124,14 +124,14 @@ unsafe extern "system" fn wnd_proc(
     match message {
         WM_CREATE => {
             SetTimer(hwnd, ID_TIMER, 1000, None);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_TIMER => {
             MessageBeep(0xffff_ffff);
             FLIP_FLOP = !FLIP_FLOP;
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -149,12 +149,12 @@ unsafe extern "system" fn wnd_proc(
             DeleteBrush(hbrush);
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

@@ -166,18 +166,18 @@ unsafe extern "system" fn wnd_proc(
             }
 
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
             CLIENT_WIDTH = GET_X_LPARAM(lparam);
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_TIMER => {
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -197,14 +197,14 @@ unsafe extern "system" fn wnd_proc(
             display_time(hdc, USE_24HR, SUPPRESS);
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             KillTimer(hwnd, ID_TIMER);
             DeleteBrush(HBRUSH_RED);
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         _ => DefWindowProcW(hwnd, message, wparam, lparam),

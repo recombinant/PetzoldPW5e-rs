@@ -126,7 +126,7 @@ unsafe extern "system" fn wnd_proc(
         WM_LBUTTONDOWN => {
             POINT_COUNT = 0;
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_MOUSEMOVE => {
@@ -158,12 +158,12 @@ unsafe extern "system" fn wnd_proc(
                 ReleaseDC(hwnd, hdc);
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONUP => {
             InvalidateRect(hwnd, null(), FALSE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -192,12 +192,12 @@ unsafe extern "system" fn wnd_proc(
             SetCursor(LoadCursorW(null_mut(), IDC_ARROW));
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

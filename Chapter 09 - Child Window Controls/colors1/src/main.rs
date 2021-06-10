@@ -259,7 +259,7 @@ unsafe extern "system" fn wnd_proc(
 
             CHAR_Y = HIWORD(GetDialogBaseUnits() as DWORD) as c_int;
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -306,12 +306,12 @@ unsafe extern "system" fn wnd_proc(
                 );
             }
             SetFocus(hwnd);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SETFOCUS => {
             SetFocus(HWND_SCROLL[ID_FOCUS]);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_VSCROLL => {
@@ -366,7 +366,7 @@ unsafe extern "system" fn wnd_proc(
             ) as HBRUSH);
             InvalidateRect(hwnd, &RECT_COLOR, TRUE);
 
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_CTLCOLORSCROLLBAR => {
@@ -377,19 +377,19 @@ unsafe extern "system" fn wnd_proc(
         WM_CTLCOLORSTATIC => {
             let i = GetWindowLongPtrW(lparam as HWND, GWLP_ID) as usize;
 
-            if i >= 3 && i <= 8 {
+            if (3..=8).contains(&i) {
                 // static text controls
                 SetTextColor(wparam as HDC, PRIMARY_COLORS[i % 3]);
                 SetBkColor(wparam as HDC, GetSysColor(COLOR_BTNHIGHLIGHT));
                 return HBRUSH_STATIC as LRESULT;
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SYSCOLORCHANGE => {
             DeleteBrush(HBRUSH_STATIC);
             HBRUSH_STATIC = CreateSolidBrush(GetSysColor(COLOR_BTNHIGHLIGHT));
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
@@ -405,7 +405,7 @@ unsafe extern "system" fn wnd_proc(
             DeleteBrush(HBRUSH_STATIC);
 
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         _ => DefWindowProcW(hwnd, message, wparam, lparam),

@@ -137,7 +137,7 @@ unsafe extern "system" fn wnd_proc(
 
             BLOCKING = true;
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_MOUSEMOVE => {
@@ -151,7 +151,7 @@ unsafe extern "system" fn wnd_proc(
 
                 draw_box_outline(hwnd, BEGIN_POINT, END_POINT);
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_LBUTTONUP => {
@@ -170,7 +170,7 @@ unsafe extern "system" fn wnd_proc(
 
                 InvalidateRect(hwnd, null(), TRUE);
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_CHAR => {
@@ -185,7 +185,7 @@ unsafe extern "system" fn wnd_proc(
 
                 BLOCKING = false;
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -210,12 +210,12 @@ unsafe extern "system" fn wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

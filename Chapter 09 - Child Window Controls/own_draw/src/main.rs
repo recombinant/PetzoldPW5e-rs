@@ -174,7 +174,7 @@ unsafe extern "system" fn wnd_proc(
                 null_mut(),
             );
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
@@ -199,7 +199,7 @@ unsafe extern "system" fn wnd_proc(
                 TRUE,
             );
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_COMMAND => {
@@ -234,7 +234,7 @@ unsafe extern "system" fn wnd_proc(
                 rc.bottom - rc.top,
                 TRUE,
             );
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DRAWITEM => {
@@ -349,12 +349,12 @@ unsafe extern "system" fn wnd_proc(
                 };
                 DrawFocusRect(dis.hDC, &rc_focus);
             }
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

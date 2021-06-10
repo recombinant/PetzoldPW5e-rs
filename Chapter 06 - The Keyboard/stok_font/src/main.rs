@@ -179,12 +179,12 @@ unsafe extern "system" fn wnd_proc(
                 ..mem::zeroed()
             };
             SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DISPLAYCHANGE => {
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_VSCROLL => {
@@ -228,7 +228,7 @@ unsafe extern "system" fn wnd_proc(
             STOCK_FONT_IDX = si.nPos as usize;
 
             InvalidateRect(hwnd, null(), TRUE);
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_KEYDOWN => {
@@ -248,7 +248,7 @@ unsafe extern "system" fn wnd_proc(
                 _ => {}
             }
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -282,7 +282,7 @@ unsafe extern "system" fn wnd_proc(
 
             // vertical and horizontal lines
 
-            for i in 0 as c_int..17 {
+            for i in 0..17 {
                 MoveToEx(hdc, (i + 2) * x_grid, 2 * y_grid, null_mut());
                 LineTo(hdc, (i + 2) * x_grid, 19 * y_grid);
 
@@ -292,7 +292,7 @@ unsafe extern "system" fn wnd_proc(
 
             // vertical and horizontal headings
 
-            for i in 0 as c_int..16 {
+            for i in 0..16 {
                 let buffer1 = to_wstr(&format!("{:X}-", i));
                 TextOutW(
                     hdc,
@@ -314,19 +314,19 @@ unsafe extern "system" fn wnd_proc(
 
             // characters
 
-            for y in 0 as c_int..16 {
-                for x in 0 as c_int..16 {
+            for y in 0..16 {
+                for x in 0..16 {
                     let c: u16 = (16 * x + y) as u16;
                     TextOutW(hdc, (2 * x + 5) * x_grid / 2, (y + 3) * y_grid + 2, &c, 1);
                 }
             }
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

@@ -156,12 +156,12 @@ unsafe extern "system" fn wnd_proc(
             };
             SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_SIZE => {
             CLIENT_HEIGHT = GET_Y_LPARAM(lparam);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_VSCROLL => {
@@ -205,7 +205,7 @@ unsafe extern "system" fn wnd_proc(
                 InvalidateRect(hwnd, null(), TRUE);
             }
 
-            0 as LRESULT
+            0 // message processed
         }
 
         WM_PAINT => {
@@ -244,12 +244,12 @@ unsafe extern "system" fn wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
 
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }

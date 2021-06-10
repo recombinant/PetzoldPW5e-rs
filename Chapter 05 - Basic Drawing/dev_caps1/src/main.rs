@@ -248,7 +248,7 @@ unsafe extern "system" fn wnd_proc(
 
             ReleaseDC(hwnd, hdc);
 
-            0 as LRESULT // message processed
+            0 // message processed
         }
         WM_PAINT => {
             let mut ps: PAINTSTRUCT = mem::MaybeUninit::uninit().assume_init();
@@ -290,11 +290,11 @@ unsafe extern "system" fn wnd_proc(
             }
 
             EndPaint(hwnd, &ps);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         WM_DESTROY => {
             PostQuitMessage(0);
-            0 as LRESULT // message processed
+            0 // message processed
         }
         _ => DefWindowProcW(hwnd, message, wparam, lparam),
     }
