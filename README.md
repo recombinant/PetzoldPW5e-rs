@@ -1,3 +1,5 @@
+(2020-09-09 successfully compiled and run with Rust 1.46.0 on Windows 7 and Windows 10)
+
 # PetzoldPW5e-rs
 64 bit Rust transliteration of Charles Petzold's excellent book **Programming Windows 
 5th Edition ISBN-10 157231995X**
