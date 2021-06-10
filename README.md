@@ -1,4 +1,4 @@
-(2020-09-09 successfully compiled and run with Rust 1.46.0 on Windows 7 and Windows 10)
+(2021-06-10 successfully compiled and run with Rust 1.52.1 after a *cargo update* on Windows 7)
 
 # PetzoldPW5e-rs
 64 bit Rust transliteration of Charles Petzold's excellent book **Programming Windows 
