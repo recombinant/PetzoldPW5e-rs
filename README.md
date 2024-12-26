@@ -1,3 +1,5 @@
+2024-12-24 This project has been archived. There is/was negligible traffic.
+
 (2021-06-10 successfully compiled and run with Rust 1.52.1 after a *cargo update* on Windows 7)
 
 # PetzoldPW5e-rs
